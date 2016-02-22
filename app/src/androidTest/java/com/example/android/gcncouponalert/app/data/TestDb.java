@@ -55,6 +55,7 @@ public class TestDb extends AndroidTestCase {
         final HashSet<String> tableNameHashSet = new HashSet<String>();
         tableNameHashSet.add(WeatherContract.LocationEntry.TABLE_NAME);
         tableNameHashSet.add(WeatherContract.WeatherEntry.TABLE_NAME);
+        tableNameHashSet.add(WeatherContract.CouponEntry.TABLE_NAME);
 
         mContext.deleteDatabase(WeatherDbHelper.DATABASE_NAME);
         SQLiteDatabase db = new WeatherDbHelper(
@@ -74,34 +75,42 @@ public class TestDb extends AndroidTestCase {
 
         // if this fails, it means that your database doesn't contain both the location entry
         // and weather entry tables
-        assertTrue("Error: Your database was created without both the location entry and weather entry tables",
+        assertTrue("Error: Your database was created without any tables",
                 tableNameHashSet.isEmpty());
 
         // now, do our tables contain the correct columns?
-        c = db.rawQuery("PRAGMA table_info(" + WeatherContract.LocationEntry.TABLE_NAME + ")",
-                null);
+        //c = db.rawQuery("PRAGMA table_info(" + WeatherContract.LocationEntry.TABLE_NAME + ")",null);
+        c = db.rawQuery("PRAGMA table_info(" + WeatherContract.CouponEntry.TABLE_NAME + ")",null);
 
         assertTrue("Error: This means that we were unable to query the database for table information.",
                 c.moveToFirst());
 
         // Build a HashSet of all of the column names we want to look for
+        /*
         final HashSet<String> locationColumnHashSet = new HashSet<String>();
         locationColumnHashSet.add(WeatherContract.LocationEntry._ID);
         locationColumnHashSet.add(WeatherContract.LocationEntry.COLUMN_CITY_NAME);
         locationColumnHashSet.add(WeatherContract.LocationEntry.COLUMN_COORD_LAT);
         locationColumnHashSet.add(WeatherContract.LocationEntry.COLUMN_COORD_LONG);
         locationColumnHashSet.add(WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING);
+        */
+
+        final HashSet<String> couponColumnHashSet = new HashSet<String>();
+        couponColumnHashSet.add(WeatherContract.CouponEntry._ID);
+        couponColumnHashSet.add(WeatherContract.CouponEntry.COLUMN_COUPON_CODE);
+        couponColumnHashSet.add(WeatherContract.CouponEntry.COLUMN_COUPON_NAME);
+        couponColumnHashSet.add(WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE);
 
         int columnNameIndex = c.getColumnIndex("name");
         do {
             String columnName = c.getString(columnNameIndex);
-            locationColumnHashSet.remove(columnName);
+            couponColumnHashSet.remove(columnName);
         } while(c.moveToNext());
 
         // if this fails, it means that your database doesn't contain all of the required location
         // entry columns
-        assertTrue("Error: The database doesn't contain all of the required location entry columns",
-                locationColumnHashSet.isEmpty());
+        assertTrue("Error: The database doesn't contain all of the required coupon entry columns",
+                couponColumnHashSet.isEmpty());
         db.close();
     }
 
@@ -176,6 +185,42 @@ public class TestDb extends AndroidTestCase {
         dbHelper.close();
     }
 
+    public void testCouponTable() {
+        WeatherDbHelper dbHelper = new WeatherDbHelper(mContext);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        ContentValues couponValues = TestUtilities.createTestCouponValues();
+
+        long couponRowId = db.insert(WeatherContract.CouponEntry.TABLE_NAME, null, couponValues);
+        assertTrue(couponRowId != -1);
+
+        // Fourth Step: Query the database and receive a Cursor back
+        // A cursor is your primary interface to the query results.
+        Cursor couponCursor = db.query(
+                WeatherContract.CouponEntry.TABLE_NAME,  // Table to Query
+                null, // leaving "columns" null just returns all the columns.
+                null, // cols for "where" clause
+                null, // values for "where" clause
+                null, // columns to group by
+                null, // columns to filter by row groups
+                null  // sort order
+        );
+
+        // Move the cursor to the first valid database row and check to see if we have any rows
+        assertTrue( "Error: No Records returned from location query", couponCursor.moveToFirst() );
+
+        // Fifth Step: Validate the location Query
+        TestUtilities.validateCurrentRecord("testInsertReadDb couponEntry failed to validate",
+                couponCursor, couponValues);
+
+        // Move the cursor to demonstrate that there is only one record in the database
+        assertFalse( "Error: More than one record returned from weather query",
+                couponCursor.moveToNext() );
+
+        // Sixth Step: Close cursor and database
+        couponCursor.close();
+        dbHelper.close();
+    }
 
     /*
         Students: This is a helper method for the testWeatherTable quiz. You can move your

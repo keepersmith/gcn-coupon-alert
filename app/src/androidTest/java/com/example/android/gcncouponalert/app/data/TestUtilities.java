@@ -62,6 +62,15 @@ public class TestUtilities extends AndroidTestCase {
         return weatherValues;
     }
 
+    static ContentValues createTestCouponValues() {
+        // Create a new map of values, where column names are the keys
+        ContentValues testValues = new ContentValues();
+        testValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_CODE, "1");
+        testValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_NAME, "Number One Coupon");
+        testValues.put(WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE, "2016-02-22 00:00:00");
+        return testValues;
+    }
+
     /*
         Students: You can uncomment this helper function once you have finished creating the
         LocationEntry part of the WeatherContract.

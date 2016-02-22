@@ -30,7 +30,7 @@ public class WeatherContract {
     // relationship between a domain name and its website.  A convenient string to use for the
     // content authority is the package name for the com.example.android.gcncouponalert.app, which is guaranteed to be unique on the
     // device.
-    public static final String CONTENT_AUTHORITY = "com.example.android.gcncouponalert.com.example.android.gcncouponalert.app";
+    public static final String CONTENT_AUTHORITY = "com.example.android.gcncouponalert.app";
 
     // Use CONTENT_AUTHORITY to create the base of all URI's which apps will use to contact
     // the content provider.
@@ -131,6 +131,7 @@ public class WeatherContract {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
+
         /*
             Student: This is the buildWeatherLocation function you filled in.
          */
@@ -175,7 +176,7 @@ public class WeatherContract {
         }
 
         public static final Uri CONTENT_URI =
-                BASE_CONTENT_URI.buildUpon().appendPath(PATH_WEATHER).build();
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_COUPON).build();
 
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_COUPON;
@@ -190,6 +191,10 @@ public class WeatherContract {
 
         public static Uri buildCouponUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+
+        public static Uri buildCouponLocation(String coupon_code) {
+            return CONTENT_URI.buildUpon().appendPath(coupon_code).build();
         }
 
 

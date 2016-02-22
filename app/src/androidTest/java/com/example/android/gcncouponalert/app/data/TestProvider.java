@@ -29,6 +29,7 @@ import android.util.Log;
 
 import com.example.android.gcncouponalert.app.data.WeatherContract.LocationEntry;
 import com.example.android.gcncouponalert.app.data.WeatherContract.WeatherEntry;
+import com.example.android.gcncouponalert.app.data.WeatherContract.CouponEntry;
 
 /*
     Note: This is not a complete set of tests of the Sunshine ContentProvider, but it does test
@@ -61,6 +62,11 @@ public class TestProvider extends AndroidTestCase {
                 null,
                 null
         );
+        mContext.getContentResolver().delete(
+                CouponEntry.CONTENT_URI,
+                null,
+                null
+        );
 
         Cursor cursor = mContext.getContentResolver().query(
                 WeatherEntry.CONTENT_URI,
@@ -80,6 +86,16 @@ public class TestProvider extends AndroidTestCase {
                 null
         );
         assertEquals("Error: Records not deleted from Location table during delete", 0, cursor.getCount());
+        cursor.close();
+
+        cursor = mContext.getContentResolver().query(
+                CouponEntry.CONTENT_URI,
+                null,
+                null,
+                null,
+                null
+        );
+        assertEquals("Error: Records not deleted from Coupon table during delete", 0, cursor.getCount());
         cursor.close();
     }
 
@@ -133,33 +149,36 @@ public class TestProvider extends AndroidTestCase {
             functioning correctly.
          */
     public void testGetType() {
-        // content://com.example.android.gcn-coupon-alert.com.example.android.gcncouponalert.app/weather/
+        // content://com.example.android.gcncouponalert.app/weather/
         String type = mContext.getContentResolver().getType(WeatherEntry.CONTENT_URI);
-        // vnd.android.cursor.dir/com.example.android.gcn-coupon-alert.com.example.android.gcncouponalert.app/weather
+        // vnd.android.cursor.dir/com.example.android.gcncouponalert.app/weather
         assertEquals("Error: the WeatherEntry CONTENT_URI should return WeatherEntry.CONTENT_TYPE",
                 WeatherEntry.CONTENT_TYPE, type);
 
         String testLocation = "94074";
-        // content://com.example.android.gcn-coupon-alert.com.example.android.gcncouponalert.app/weather/94074
+        // content://com.example.android.android.gcncouponalert.app/weather/94074
         type = mContext.getContentResolver().getType(
                 WeatherEntry.buildWeatherLocation(testLocation));
-        // vnd.android.cursor.dir/com.example.android.gcn-coupon-alert.com.example.android.gcncouponalert.app/weather
+        // vnd.android.cursor.dir/com.example.android.gcncouponalert.app/weather
         assertEquals("Error: the WeatherEntry CONTENT_URI with location should return WeatherEntry.CONTENT_TYPE",
                 WeatherEntry.CONTENT_TYPE, type);
 
         long testDate = 1419120000L; // December 21st, 2014
-        // content://com.example.android.gcn-coupon-alert.com.example.android.gcncouponalert.app/weather/94074/20140612
+        // content://com.example.android.gcncouponalert.app/weather/94074/20140612
         type = mContext.getContentResolver().getType(
                 WeatherEntry.buildWeatherLocationWithDate(testLocation, testDate));
-        // vnd.android.cursor.item/com.example.android.gcn-coupon-alert.com.example.android.gcncouponalert.app/weather/1419120000
+        // vnd.android.cursor.item/com.example.android.gcncouponalert.app/weather/1419120000
         assertEquals("Error: the WeatherEntry CONTENT_URI with location and date should return WeatherEntry.CONTENT_ITEM_TYPE",
                 WeatherEntry.CONTENT_ITEM_TYPE, type);
 
-        // content://com.example.android.gcn-coupon-alert.com.example.android.gcncouponalert.app/location/
+        // content://com.example.android.gcncouponalert.app/location/
         type = mContext.getContentResolver().getType(LocationEntry.CONTENT_URI);
-        // vnd.android.cursor.dir/com.example.android.gcn-coupon-alert.com.example.android.gcncouponalert.app/location
+        // vnd.android.cursor.dir/com.example.android.gcncouponalert.app/location
         assertEquals("Error: the LocationEntry CONTENT_URI should return LocationEntry.CONTENT_TYPE",
                 LocationEntry.CONTENT_TYPE, type);
+
+
+
     }
 
 
