@@ -35,8 +35,11 @@ public class WeatherProvider extends ContentProvider {
     static final int WEATHER_WITH_LOCATION_AND_DATE = 102;
     static final int LOCATION = 300;
     static final int COUPON = 400;
+    static final int COUPON_WITH_LOCATION = 401;
 
     private static final SQLiteQueryBuilder sWeatherByLocationSettingQueryBuilder;
+
+    private static final SQLiteQueryBuilder sCouponByLocationSettingQueryBuilder;
 
     private static final String sCouponSelection =
             WeatherContract.CouponEntry.TABLE_NAME+
@@ -57,6 +60,19 @@ public class WeatherProvider extends ContentProvider {
         );
     }
 
+    static{
+        sCouponByLocationSettingQueryBuilder = new SQLiteQueryBuilder();
+
+        //This is an inner join which looks like
+        //weather INNER JOIN location ON weather.location_id = location._id
+        sCouponByLocationSettingQueryBuilder.setTables(
+                WeatherContract.CouponEntry.TABLE_NAME + " INNER JOIN " +
+                        WeatherContract.LocationEntry.TABLE_NAME +
+                        " ON " + WeatherContract.CouponEntry.TABLE_NAME +
+                        "." + WeatherContract.CouponEntry.COLUMN_LOC_KEY +
+                        " = " + WeatherContract.LocationEntry.TABLE_NAME +
+                        "." + WeatherContract.LocationEntry._ID);
+    }
 
     static{
         sWeatherByLocationSettingQueryBuilder = new SQLiteQueryBuilder();
@@ -88,6 +104,31 @@ public class WeatherProvider extends ContentProvider {
             WeatherContract.LocationEntry.TABLE_NAME +
                     "." + WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
                     WeatherContract.WeatherEntry.COLUMN_DATE + " = ? ";
+
+    private Cursor getCouponByLocationSetting(Uri uri, String[] projection, String sortOrder) {
+        String locationSetting = WeatherContract.CouponEntry.getLocationSettingFromUri(uri);
+        //long startDate = WeatherContract.WeatherEntry.getStartDateFromUri(uri);
+
+        String[] selectionArgs;
+        String selection;
+
+        //if (startDate == 0) {
+            selection = sLocationSettingSelection;
+            selectionArgs = new String[]{locationSetting};
+        //} else {
+        //    selectionArgs = new String[]{locationSetting, Long.toString(startDate)};
+        //    selection = sLocationSettingWithStartDateSelection;
+        //}
+
+        return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
 
     private Cursor getWeatherByLocationSetting(Uri uri, String[] projection, String sortOrder) {
         String locationSetting = WeatherContract.WeatherEntry.getLocationSettingFromUri(uri);
@@ -153,6 +194,7 @@ public class WeatherProvider extends ContentProvider {
         matcher.addURI(authority, WeatherContract.PATH_LOCATION, LOCATION);
 
         matcher.addURI(authority, WeatherContract.PATH_COUPON, COUPON);
+        matcher.addURI(authority, WeatherContract.PATH_COUPON + "/*", COUPON_WITH_LOCATION);
         return matcher;
     }
 
@@ -188,6 +230,8 @@ public class WeatherProvider extends ContentProvider {
             case LOCATION:
                 return WeatherContract.LocationEntry.CONTENT_TYPE;
             case COUPON:
+                return WeatherContract.CouponEntry.CONTENT_TYPE;
+            case COUPON_WITH_LOCATION:
                 return WeatherContract.CouponEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -250,6 +294,12 @@ public class WeatherProvider extends ContentProvider {
                         sortOrder
                 );
                 break;
+            }
+
+            case COUPON_WITH_LOCATION: {
+                retCursor = getCouponByLocationSetting(uri, projection, sortOrder);
+                break;
+
             }
 
 
@@ -318,6 +368,10 @@ public class WeatherProvider extends ContentProvider {
                 rowsDeleted = db.delete(
                         WeatherContract.LocationEntry.TABLE_NAME, selection, selectionArgs);
                 break;
+            case COUPON:
+                rowsDeleted = db.delete(
+                        WeatherContract.CouponEntry.TABLE_NAME, selection, selectionArgs);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -353,6 +407,10 @@ public class WeatherProvider extends ContentProvider {
                 rowsUpdated = db.update(WeatherContract.LocationEntry.TABLE_NAME, values, selection,
                         selectionArgs);
                 break;
+            case COUPON:
+                rowsUpdated = db.update(WeatherContract.LocationEntry.TABLE_NAME, values, selection,
+                        selectionArgs);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -367,7 +425,7 @@ public class WeatherProvider extends ContentProvider {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
         switch (match) {
-            case WEATHER:
+            case WEATHER: {
                 db.beginTransaction();
                 int returnCount = 0;
                 try {
@@ -384,6 +442,25 @@ public class WeatherProvider extends ContentProvider {
                 }
                 getContext().getContentResolver().notifyChange(uri, null);
                 return returnCount;
+            }
+            case COUPON: {
+                db.beginTransaction();
+                int returnCount = 0;
+                try {
+                    for (ContentValues value : values) {
+                        //normalizeDate(value);
+                        long _id = db.insert(WeatherContract.CouponEntry.TABLE_NAME, null, value);
+                        if (_id != -1) {
+                            returnCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+                getContext().getContentResolver().notifyChange(uri, null);
+                return returnCount;
+            }
             default:
                 return super.bulkInsert(uri, values);
         }

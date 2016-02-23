@@ -51,9 +51,13 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
 
         final String SQL_CREATE_COUPON_TABLE = "CREATE TABLE " + CouponEntry.TABLE_NAME + " (" +
                 CouponEntry._ID + " INTEGER PRIMARY KEY," +
-                CouponEntry.COLUMN_COUPON_CODE + " TEXT UNIQUE NOT NULL, " +
+                CouponEntry.COLUMN_LOC_KEY + " INTEGER NOT NULL, " +
+                CouponEntry.COLUMN_COUPON_CODE + " TEXT UNIQUE ON CONFLICT REPLACE NOT NULL, " +
                 CouponEntry.COLUMN_COUPON_NAME + " TEXT NOT NULL, " +
-                CouponEntry.COLUMN_LAST_ACTIVE_DATE + " DATETIME NOT NULL " +
+                CouponEntry.COLUMN_LAST_ACTIVE_DATE + " DATETIME NOT NULL, " +
+                // Set up the location column as a foreign key to location table.
+                " FOREIGN KEY (" + CouponEntry.COLUMN_LOC_KEY + ") REFERENCES " +
+                LocationEntry.TABLE_NAME + " (" + LocationEntry._ID + ") " +
                 " );";
 
         final String SQL_CREATE_WEATHER_TABLE = "CREATE TABLE " + WeatherEntry.TABLE_NAME + " (" +

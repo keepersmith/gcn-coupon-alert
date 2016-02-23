@@ -186,6 +186,7 @@ public class WeatherContract {
         public static final String TABLE_NAME = "coupon";
 
         public static final String COLUMN_COUPON_CODE = "coupon_code";
+        public static final String COLUMN_LOC_KEY = "location_id";
         public static final String COLUMN_COUPON_NAME = "coupon_name";
         public static final String COLUMN_LAST_ACTIVE_DATE = "last_active";
 
@@ -193,10 +194,13 @@ public class WeatherContract {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-        public static Uri buildCouponLocation(String coupon_code) {
-            return CONTENT_URI.buildUpon().appendPath(coupon_code).build();
+        public static Uri buildCouponLocation(String locationSetting) {
+            return CONTENT_URI.buildUpon().appendPath(locationSetting).build();
         }
 
+        public static String getLocationSettingFromUri(Uri uri) {
+            return uri.getPathSegments().get(1);
+        }
 
     }
 }

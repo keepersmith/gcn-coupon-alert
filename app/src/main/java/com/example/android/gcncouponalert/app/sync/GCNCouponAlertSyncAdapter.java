@@ -75,7 +75,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "Starting sync");
-        //String locationQuery = Utility.getPreferredLocation(getContext());
+        String locationQuery = Utility.getPreferredLocation(getContext());
 
         // These two need to be declared outside the try/catch
         // so that they can be closed in the finally block.
@@ -94,43 +94,55 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             // Possible parameters are avaiable at OWM's forecast API page, at
             // http://openweathermap.org/API#forecast
             final String FORECAST_BASE_URL =
-                    "http://tools.grocerycouponnetwork.com/api1/coupon?";
+                    "http://tools.grocerycouponnetwork.com/api1/coupon/?";
             final String AUTH_KEY_PARAM = "auth_key";
+            final String LOCATION_PARAM = "zip_code";
 
-            Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
+            // do this twice - once for national coupons, once for local coupons
+            Uri[] builtUri = new Uri[2];
+            builtUri[0] = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                    .appendQueryParameter(LOCATION_PARAM, locationQuery)
+                    .appendQueryParameter(AUTH_KEY_PARAM, BuildConfig.GCN_COUPON_API_KEY)
+                    .build();
+            builtUri[1] = Uri.parse(FORECAST_BASE_URL).buildUpon()
                     .appendQueryParameter(AUTH_KEY_PARAM, BuildConfig.GCN_COUPON_API_KEY)
                     .build();
 
-            URL url = new URL(builtUri.toString());
+            for (int i = 0; i < 2; i++) {
+                URL url = new URL(builtUri[i].toString());
 
-            // Create the request to OpenWeatherMap, and open the connection
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("GET");
-            urlConnection.connect();
+                // Create the request to OpenWeatherMap, and open the connection
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
 
-            // Read the input stream into a String
-            InputStream inputStream = urlConnection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
-            if (inputStream == null) {
-                // Nothing to do.
-                return;
+                // Read the input stream into a String
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                if (inputStream == null) {
+                    // Nothing to do.
+                    return;
+                }
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                    // But it does make debugging a *lot* easier if you print out the completed
+                    // buffer for debugging.
+                    buffer.append(line + "\n");
+                }
+
+                if (buffer.length() == 0) {
+                    // Stream was empty.  No point in parsing.
+                    Log.d(LOG_TAG, "API returned nothing: " + builtUri.toString());
+                    return;
+                }
+                couponJsonStr = buffer.toString();
+                Log.d(LOG_TAG, "API returned this: " + couponJsonStr);
+                getCouponDataFromJson(couponJsonStr, locationQuery);
+
             }
-            reader = new BufferedReader(new InputStreamReader(inputStream));
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                // But it does make debugging a *lot* easier if you print out the completed
-                // buffer for debugging.
-                buffer.append(line + "\n");
-            }
-
-            if (buffer.length() == 0) {
-                // Stream was empty.  No point in parsing.
-                return;
-            }
-            couponJsonStr = buffer.toString();
-            getCouponDataFromJson(couponJsonStr);
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error ", e);
             // If the code didn't successfully get the weather data, there's no point in attempting
@@ -160,7 +172,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
      * Fortunately parsing is easy:  constructor takes the JSON string and converts it
      * into an Object hierarchy for us.
      */
-    private void getCouponDataFromJson(String forecastJsonStr)
+    private void getCouponDataFromJson(String forecastJsonStr, String locationSetting)
             throws JSONException {
 
         // Now we have a String representing the complete forecast in JSON Format.
@@ -183,7 +195,10 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
         try {
             JSONObject couponJson = new JSONObject(forecastJsonStr);
-            JSONArray couponArray = couponJson.getJSONArray(OWM_RESULTS);
+            JSONObject couponData = couponJson.getJSONObject(OWM_DATA);
+            JSONArray couponArray = couponData.getJSONArray(OWM_RESULTS);
+
+            long locationId = addLocation(locationSetting);
 
             Vector<ContentValues> cVVector = new Vector<ContentValues>(couponArray.length());
 
@@ -198,6 +213,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_NAME, coupon_name);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_CODE, coupon_code);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE, last_active_date);
+                couponValues.put(WeatherContract.CouponEntry.COLUMN_LOC_KEY, locationId);
 
                 cVVector.add(couponValues);
             }
@@ -219,8 +235,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 getContext().getContentResolver().bulkInsert(WeatherContract.CouponEntry.CONTENT_URI, cvArray);
 
                 // delete old data so we don't build up an endless history
-                getContext().getContentResolver().delete(WeatherContract.CouponEntry.CONTENT_URI,
-                        WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE + " <= ?",new String[]{"NOW()"});
+                //getContext().getContentResolver().delete(WeatherContract.CouponEntry.CONTENT_URI,WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE + " <= ?",new String[]{"NOW()"});
 
                 notifyCoupon();
             }
@@ -234,7 +249,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private void notifyCoupon() {
-
+        Log.d(LOG_TAG, "notifyCoupon()");
     }
     private void notifyWeather() {
         Context context = getContext();
@@ -322,12 +337,12 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
      * Helper method to handle insertion of a new location in the weather database.
      *
      * @param locationSetting The location string used to request updates from the server.
-     * @param cityName A human-readable city name, e.g "Mountain View"
-     * @param lat the latitude of the city
-     * @param lon the longitude of the city
+     * @param //cityName A human-readable city name, e.g "Mountain View"
+     * @param //lat the latitude of the city
+     * @param //lon the longitude of the city
      * @return the row ID of the added location.
      */
-    long addLocation(String locationSetting, String cityName, double lat, double lon) {
+    long addLocation(String locationSetting) {
         long locationId;
 
         // First, check if the location with this city name exists in the db
@@ -348,10 +363,11 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
             // Then add the data, along with the corresponding name of the data type,
             // so the content provider knows what kind of value is being inserted.
-            locationValues.put(WeatherContract.LocationEntry.COLUMN_CITY_NAME, cityName);
+            //locationValues.put(WeatherContract.LocationEntry.COLUMN_CITY_NAME, cityName);
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_CITY_NAME, "unknown");
             locationValues.put(WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING, locationSetting);
-            locationValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LAT, lat);
-            locationValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LONG, lon);
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LAT, "unknown");
+            locationValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LONG, "unknown");
 
             // Finally, insert location data into the database.
             Uri insertedUri = getContext().getContentResolver().insert(

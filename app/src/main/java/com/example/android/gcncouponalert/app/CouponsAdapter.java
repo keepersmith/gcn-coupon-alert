@@ -10,10 +10,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 /**
- * {@link ForecastAdapter} exposes a list of weather forecasts
+ * {@link CouponsAdapter} exposes a list of weather forecasts
  * from a {@link Cursor} to a {@link android.widget.ListView}.
  */
-public class ForecastAdapter extends CursorAdapter {
+public class CouponsAdapter extends CursorAdapter {
 
     private static final int VIEW_TYPE_COUNT = 2;
     private static final int VIEW_TYPE_TODAY = 0;
@@ -41,7 +41,7 @@ public class ForecastAdapter extends CursorAdapter {
         }
     }
 
-    public ForecastAdapter(Context context, Cursor c, int flags) {
+    public CouponsAdapter(Context context, Cursor c, int flags) {
         super(context, c, flags);
     }
 
@@ -78,41 +78,47 @@ public class ForecastAdapter extends CursorAdapter {
         switch (viewType) {
             case VIEW_TYPE_TODAY: {
                 // Get weather icon
+                /*
                 viewHolder.iconView.setImageResource(Utility.getArtResourceForWeatherCondition(
-                        cursor.getInt(ForecastFragment.COL_WEATHER_CONDITION_ID)));
+                        cursor.getInt(CouponsFragment.COL_WEATHER_CONDITION_ID)));
+                        */
                 break;
             }
             case VIEW_TYPE_FUTURE_DAY: {
                 // Get weather icon
+                /*
                 viewHolder.iconView.setImageResource(Utility.getIconResourceForWeatherCondition(
-                        cursor.getInt(ForecastFragment.COL_WEATHER_CONDITION_ID)));
+                        cursor.getInt(CouponsFragment.COL_WEATHER_CONDITION_ID)));
+                        */
                 break;
             }
         }
 
         // Read date from cursor
-        long dateInMillis = cursor.getLong(ForecastFragment.COL_WEATHER_DATE);
+        //long dateInMillis = cursor.getLong(CouponsFragment.COL_WEATHER_DATE);
         // Find TextView and set formatted date on it
-        viewHolder.dateView.setText(Utility.getFriendlyDayString(context, dateInMillis));
+        //viewHolder.dateView.setText(Utility.getFriendlyDayString(context, dateInMillis));
+        viewHolder.dateView.setText(cursor.getString(CouponsFragment.COL_COUPON_CODE));
 
         // Read weather forecast from cursor
-        String description = cursor.getString(ForecastFragment.COL_WEATHER_DESC);
+        //String description = cursor.getString(CouponsFragment.COL_WEATHER_DESC);
         // Find TextView and set weather forecast on it
-        viewHolder.descriptionView.setText(description);
+        //viewHolder.descriptionView.setText(description);
+        viewHolder.descriptionView.setText(cursor.getString(CouponsFragment.COL_COUPON_NAME));
 
         // For accessibility, add a content description to the icon field
-        viewHolder.iconView.setContentDescription(description);
+        //viewHolder.iconView.setContentDescription(description);
 
         // Read user preference for metric or imperial temperature units
-        boolean isMetric = Utility.isMetric(context);
+        //boolean isMetric = Utility.isMetric(context);
 
         // Read high temperature from cursor
-        double high = cursor.getDouble(ForecastFragment.COL_WEATHER_MAX_TEMP);
-        viewHolder.highTempView.setText(Utility.formatTemperature(context, high));
+        //double high = cursor.getDouble(CouponsFragment.COL_WEATHER_MAX_TEMP);
+        //viewHolder.highTempView.setText(Utility.formatTemperature(context, high));
 
         // Read low temperature from cursor
-        double low = cursor.getDouble(ForecastFragment.COL_WEATHER_MIN_TEMP);
-        viewHolder.lowTempView.setText(Utility.formatTemperature(context, low));
+        //double low = cursor.getDouble(CouponsFragment.COL_WEATHER_MIN_TEMP);
+        //viewHolder.lowTempView.setText(Utility.formatTemperature(context, low));
     }
 
     public void setUseTodayLayout(boolean useTodayLayout) {

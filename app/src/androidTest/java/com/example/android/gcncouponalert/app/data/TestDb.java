@@ -189,7 +189,12 @@ public class TestDb extends AndroidTestCase {
         WeatherDbHelper dbHelper = new WeatherDbHelper(mContext);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
-        ContentValues couponValues = TestUtilities.createTestCouponValues();
+        long locationRowId = insertLocation();
+
+        // Make sure we have a valid row ID.
+        assertFalse("Error: Location Not Inserted Correctly", locationRowId == -1L);
+
+        ContentValues couponValues = TestUtilities.createTestCouponValues(locationRowId);
 
         long couponRowId = db.insert(WeatherContract.CouponEntry.TABLE_NAME, null, couponValues);
         assertTrue(couponRowId != -1);
