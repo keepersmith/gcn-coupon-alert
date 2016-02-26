@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
+import android.text.Html;
 import android.text.format.Time;
 import android.util.Log;
 
@@ -46,14 +47,24 @@ import java.net.URL;
 import java.util.Vector;
 
 public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
-    public final String LOG_TAG = GCNCouponAlertSyncAdapter.class.getSimpleName();
+    public static final String LOG_TAG = GCNCouponAlertSyncAdapter.class.getSimpleName();
     // Interval at which to sync with the weather, in seconds.
     // 60 seconds (1 minute) * 180 = 3 hours
-    public static final int SYNC_INTERVAL = 60 * 180;
-    public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
-    private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
-    private static final int WEATHER_NOTIFICATION_ID = 3004;
+    //public static final int SYNC_INTERVAL = 60 * 180;
+    //public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
 
+    public static final int SYNC_INTERVAL = 60;
+    public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
+
+    //private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
+    private static final long ONE_MINUTE_IN_MILLIS = 1000 * 60;
+    private static final int WEATHER_NOTIFICATION_ID = 3004;
+    private static final int COUPON_NOTIFICATION_ID = 3005;
+
+    private static final String[] NOTIFY_NEW_COUPONS = new String[] {
+            WeatherContract.CouponEntry.COLUMN_COUPON_CODE,
+            WeatherContract.CouponEntry.COLUMN_COUPON_NAME
+    };
 
     private static final String[] NOTIFY_WEATHER_PROJECTION = new String[] {
             WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
@@ -67,6 +78,9 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final int INDEX_MAX_TEMP = 1;
     private static final int INDEX_MIN_TEMP = 2;
     private static final int INDEX_SHORT_DESC = 3;
+
+    private static final int INDEX_COUPON_CODE = 0;
+    private static final int INDEX_COUPON_NAME = 1;
 
     public GCNCouponAlertSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
@@ -206,6 +220,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 JSONObject couponInfo = couponArray.getJSONObject(i);
                 String coupon_code = couponInfo.getString(OWM_COUPON_CODE);
                 String coupon_name = couponInfo.getString(OWM_COUPON_NAME);
+                coupon_name = Html.fromHtml(coupon_name).toString();
                 String last_active_date = couponInfo.getString(OWM_COUPON_LAST_ACTIVE_DATE);
 
                 ContentValues couponValues = new ContentValues();
@@ -250,6 +265,85 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
     private void notifyCoupon() {
         Log.d(LOG_TAG, "notifyCoupon()");
+        Context context = getContext();
+        //checking the last update and notify if it' the first of the day
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String displayNotificationsKey = context.getString(R.string.pref_enable_notifications_key);
+        boolean displayNotifications = prefs.getBoolean(displayNotificationsKey,
+                Boolean.parseBoolean(context.getString(R.string.pref_enable_notifications_default)));
+
+        if ( displayNotifications ) {
+
+            String lastNotificationKey = context.getString(R.string.pref_last_notification);
+            long lastSync = prefs.getLong(lastNotificationKey, 0);
+
+            if (System.currentTimeMillis() - lastSync >= ONE_MINUTE_IN_MILLIS) {
+                // Last sync was more than 1 day ago, let's send a notification with the weather.
+                String locationQuery = Utility.getPreferredLocation(context);
+
+                //Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
+                Uri couponUri = WeatherContract.CouponEntry.buildCouponLocation(locationQuery);
+
+                // we'll query our contentProvider, as always
+                Cursor cursor = context.getContentResolver().query(couponUri, NOTIFY_NEW_COUPONS, null, null, null);
+
+                if (cursor.moveToFirst()) {
+                    int coupon_code = cursor.getInt(INDEX_COUPON_CODE);
+                    String coupon_name = cursor.getString(INDEX_COUPON_NAME);
+                    //int weatherId = cursor.getInt(INDEX_WEATHER_ID);
+                    //double high = cursor.getDouble(INDEX_MAX_TEMP);
+                    //double low = cursor.getDouble(INDEX_MIN_TEMP);
+                    //String desc = cursor.getString(INDEX_SHORT_DESC);
+
+                    //int iconId = Utility.getIconResourceForWeatherCondition(weatherId);
+                    int iconId = Utility.getIconResourceForCoupon(coupon_code);
+                    Resources resources = context.getResources();
+                    Bitmap largeIcon = BitmapFactory.decodeResource(resources, Utility.getArtResourceForCoupon(coupon_code));
+                    String title = context.getString(R.string.app_name);
+
+                    // Define the text of the forecast.
+                    String contentText = String.format(context.getString(R.string.format_notification),coupon_name);
+
+                    // NotificationCompatBuilder is a very convenient way to build backward-compatible
+                    // notifications.  Just throw in some data.
+                    NotificationCompat.Builder mBuilder =
+                            new NotificationCompat.Builder(getContext())
+                                    .setColor(resources.getColor(R.color.gcncouponalert_light_blue))
+                                    .setSmallIcon(iconId)
+                                    .setLargeIcon(largeIcon)
+                                    .setContentTitle(title)
+                                    .setContentText(contentText);
+
+                    // Make something interesting happen when the user clicks on the notification.
+                    // In this case, opening the com.example.android.gcncouponalert.app is sufficient.
+                    Intent resultIntent = new Intent(context, MainActivity.class);
+
+                    // The stack builder object will contain an artificial back stack for the
+                    // started Activity.
+                    // This ensures that navigating backward from the Activity leads out of
+                    // your application to the Home screen.
+                    TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+                    stackBuilder.addNextIntent(resultIntent);
+                    PendingIntent resultPendingIntent =
+                            stackBuilder.getPendingIntent(
+                                    0,
+                                    PendingIntent.FLAG_UPDATE_CURRENT
+                            );
+                    mBuilder.setContentIntent(resultPendingIntent);
+
+                    NotificationManager mNotificationManager =
+                            (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                    // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
+                    mNotificationManager.notify(COUPON_NOTIFICATION_ID, mBuilder.build());
+
+                    //refreshing last sync
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putLong(lastNotificationKey, System.currentTimeMillis());
+                    editor.commit();
+                }
+                cursor.close();
+            }
+        }
     }
     private void notifyWeather() {
         Context context = getContext();
@@ -264,7 +358,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             String lastNotificationKey = context.getString(R.string.pref_last_notification);
             long lastSync = prefs.getLong(lastNotificationKey, 0);
 
-            if (System.currentTimeMillis() - lastSync >= DAY_IN_MILLIS) {
+            if (System.currentTimeMillis() - lastSync >= ONE_MINUTE_IN_MILLIS) {
                 // Last sync was more than 1 day ago, let's send a notification with the weather.
                 String locationQuery = Utility.getPreferredLocation(context);
 
@@ -286,7 +380,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                     String title = context.getString(R.string.app_name);
 
                     // Define the text of the forecast.
-                    String contentText = String.format(context.getString(R.string.format_notification),
+                    String contentText = String.format(context.getString(R.string.format_notification_weather),
                             desc,
                             Utility.formatTemperature(context, high),
                             Utility.formatTemperature(context, low));
@@ -424,6 +518,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
      * @return a fake account.
      */
     public static Account getSyncAccount(Context context) {
+        Log.d(LOG_TAG, "getSyncAccount");
         // Get an instance of the Android account manager
         AccountManager accountManager =
                 (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
@@ -455,6 +550,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private static void onAccountCreated(Account newAccount, Context context) {
+        Log.d(LOG_TAG, "onAccountCreated");
         /*
          * Since we've created an account
          */
@@ -469,6 +565,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
          * Finally, let's do a sync to get things started
          */
         syncImmediately(context);
+
     }
 
     public static void initializeSyncAdapter(Context context) {
