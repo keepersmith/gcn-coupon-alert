@@ -189,6 +189,8 @@ public class WeatherContract {
         public static final String COLUMN_LOC_KEY = "location_id";
         public static final String COLUMN_COUPON_NAME = "coupon_name";
         public static final String COLUMN_LAST_ACTIVE_DATE = "last_active";
+        public static final String COLUMN_DATE_CREATED = "date_created";
+        public static final String COLUMN_NOTIFIED = "notified_flag";
 
         public static Uri buildCouponUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
@@ -196,6 +198,10 @@ public class WeatherContract {
 
         public static Uri buildCouponLocation(String locationSetting) {
             return CONTENT_URI.buildUpon().appendPath(locationSetting).build();
+        }
+
+        public static Uri buildCouponLocationNotNotified(String locationSetting) {
+            return CONTENT_URI.buildUpon().appendPath(locationSetting).appendPath("not-notified").build();
         }
 
         public static String getLocationSettingFromUri(Uri uri) {

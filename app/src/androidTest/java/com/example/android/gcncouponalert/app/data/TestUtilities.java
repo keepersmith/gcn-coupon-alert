@@ -69,6 +69,8 @@ public class TestUtilities extends AndroidTestCase {
         testValues.put(WeatherContract.CouponEntry.COLUMN_LOC_KEY, locationRowId);
         testValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_NAME, "Number One Coupon");
         testValues.put(WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE, "2016-02-22 00:00:00");
+        testValues.put(WeatherContract.CouponEntry.COLUMN_DATE_CREATED, "2016-02-21 00:00:00");
+        testValues.put(WeatherContract.CouponEntry.COLUMN_NOTIFIED, "0");
         return testValues;
     }
 

@@ -23,8 +23,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.util.Log;
 
 public class WeatherProvider extends ContentProvider {
+    public static final String LOG_TAG = WeatherProvider.class.getSimpleName();
 
     // The URI Matcher used by this content provider.
     private static final UriMatcher sUriMatcher = buildUriMatcher();
@@ -36,15 +38,20 @@ public class WeatherProvider extends ContentProvider {
     static final int LOCATION = 300;
     static final int COUPON = 400;
     static final int COUPON_WITH_LOCATION = 401;
+    static final int COUPON_WITH_LOCATION_AND_DATE = 402;
+    static final int COUPON_WITH_LOCATION_NOT_NOTIFIED = 403;
 
     private static final SQLiteQueryBuilder sWeatherByLocationSettingQueryBuilder;
 
     private static final SQLiteQueryBuilder sCouponByLocationSettingQueryBuilder;
 
+    /*
     private static final String sCouponSelection =
             WeatherContract.CouponEntry.TABLE_NAME+
                     "." + WeatherContract.CouponEntry.COLUMN_COUPON_CODE + " = ? ";
+    */
 
+    /*
     private Cursor getCouponByCode(
             Uri uri, String[] projection, String sortOrder) {
         String coupon_code = WeatherContract.CouponEntry.getCouponCodeFromUri(uri);
@@ -59,6 +66,7 @@ public class WeatherProvider extends ContentProvider {
                 null
         );
     }
+    */
 
     static{
         sCouponByLocationSettingQueryBuilder = new SQLiteQueryBuilder();
@@ -105,20 +113,61 @@ public class WeatherProvider extends ContentProvider {
                     "." + WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
                     WeatherContract.WeatherEntry.COLUMN_DATE + " = ? ";
 
+    private static final String sLocationSettingNotNotifiedSelection =
+            WeatherContract.LocationEntry.TABLE_NAME +
+                    "." + WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
+                    WeatherContract.CouponEntry.TABLE_NAME+"."+WeatherContract.CouponEntry.COLUMN_NOTIFIED + " = 0 ";
+
+
+    /*
+    private Cursor getCouponByLocationSettingAndDate(
+            Uri uri, String[] projection, String sortOrder) {
+        String locationSetting = WeatherContract.WeatherEntry.getLocationSettingFromUri(uri);
+        long date = WeatherContract.CouponEntry.getDateFromUri(uri);
+
+        String selection = sLocationSettingAndDaySelection;
+        String[] selectionArgs = new String[]{locationSetting, Long.toString(date)};
+
+        return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+    */
+
+    private Cursor getCouponByLocationSettingNotNotified(Uri uri, String[] projection, String sortOrder) {
+        String locationSetting = WeatherContract.CouponEntry.getLocationSettingFromUri(uri);
+
+        String selection = sLocationSettingNotNotifiedSelection;
+        String[] selectionArgs = new String[]{locationSetting};
+        String queryString = sCouponByLocationSettingQueryBuilder.buildQuery(
+                projection,
+                selection,
+                null,
+                null,
+                sortOrder,
+                null
+        );
+        //Log.d(LOG_TAG,"getCouponByLocationSettingNotNotified query:"+queryString);
+        return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
     private Cursor getCouponByLocationSetting(Uri uri, String[] projection, String sortOrder) {
         String locationSetting = WeatherContract.CouponEntry.getLocationSettingFromUri(uri);
-        //long startDate = WeatherContract.WeatherEntry.getStartDateFromUri(uri);
 
-        String[] selectionArgs;
-        String selection;
-
-        //if (startDate == 0) {
-            selection = sLocationSettingSelection;
-            selectionArgs = new String[]{locationSetting};
-        //} else {
-        //    selectionArgs = new String[]{locationSetting, Long.toString(startDate)};
-        //    selection = sLocationSettingWithStartDateSelection;
-        //}
+        String selection = sLocationSettingSelection;
+        String[] selectionArgs = new String[]{locationSetting};
 
         return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
                 projection,
@@ -195,6 +244,8 @@ public class WeatherProvider extends ContentProvider {
 
         matcher.addURI(authority, WeatherContract.PATH_COUPON, COUPON);
         matcher.addURI(authority, WeatherContract.PATH_COUPON + "/*", COUPON_WITH_LOCATION);
+        matcher.addURI(authority, WeatherContract.PATH_COUPON + "/*/#", COUPON_WITH_LOCATION_AND_DATE);
+        matcher.addURI(authority, WeatherContract.PATH_COUPON + "/*/not-notified", COUPON_WITH_LOCATION_NOT_NOTIFIED);
         return matcher;
     }
 
@@ -232,6 +283,10 @@ public class WeatherProvider extends ContentProvider {
             case COUPON:
                 return WeatherContract.CouponEntry.CONTENT_TYPE;
             case COUPON_WITH_LOCATION:
+                return WeatherContract.CouponEntry.CONTENT_TYPE;
+            case COUPON_WITH_LOCATION_AND_DATE:
+                return WeatherContract.CouponEntry.CONTENT_ITEM_TYPE;
+            case COUPON_WITH_LOCATION_NOT_NOTIFIED:
                 return WeatherContract.CouponEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -302,10 +357,24 @@ public class WeatherProvider extends ContentProvider {
 
             }
 
+            case COUPON_WITH_LOCATION_NOT_NOTIFIED: {
+                retCursor = getCouponByLocationSettingNotNotified(uri, projection, sortOrder);
+                break;
+
+            }
+
+            /*
+            case COUPON_WITH_LOCATION_AND_DATE: {
+                retCursor = getCouponByLocationSettingAndDate(uri, projection, sortOrder);
+                break;
+
+            }
+            */
 
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
+        //Log.d(LOG_TAG,retCursor.toString());
         retCursor.setNotificationUri(getContext().getContentResolver(), uri);
         return retCursor;
     }
@@ -408,7 +477,7 @@ public class WeatherProvider extends ContentProvider {
                         selectionArgs);
                 break;
             case COUPON:
-                rowsUpdated = db.update(WeatherContract.LocationEntry.TABLE_NAME, values, selection,
+                rowsUpdated = db.update(WeatherContract.CouponEntry.TABLE_NAME, values, selection,
                         selectionArgs);
                 break;
             default:

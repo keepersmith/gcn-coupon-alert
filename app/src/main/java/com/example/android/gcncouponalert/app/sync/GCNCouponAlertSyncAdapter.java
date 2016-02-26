@@ -103,6 +103,8 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         //String units = "metric";
         //int numDays = 14;
 
+        boolean found_data = false;
+
         try {
             // Construct the URL for the OpenWeatherMap query
             // Possible parameters are avaiable at OWM's forecast API page, at
@@ -124,6 +126,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
             for (int i = 0; i < 2; i++) {
                 URL url = new URL(builtUri[i].toString());
+                Log.d(LOG_TAG,"Calling API URL: "+builtUri[i].toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -154,7 +157,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 }
                 couponJsonStr = buffer.toString();
                 Log.d(LOG_TAG, "API returned this: " + couponJsonStr);
-                getCouponDataFromJson(couponJsonStr, locationQuery);
+                found_data = getCouponDataFromJson(couponJsonStr, locationQuery);
 
             }
         } catch (IOException e) {
@@ -176,6 +179,9 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 }
             }
         }
+        if (found_data) {
+            notifyCoupon();
+        }
         return;
     }
 
@@ -186,7 +192,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
      * Fortunately parsing is easy:  constructor takes the JSON string and converts it
      * into an Object hierarchy for us.
      */
-    private void getCouponDataFromJson(String forecastJsonStr, String locationSetting)
+    private boolean getCouponDataFromJson(String forecastJsonStr, String locationSetting)
             throws JSONException {
 
         // Now we have a String representing the complete forecast in JSON Format.
@@ -204,8 +210,9 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         final String OWM_COUPON_CODE = "coupon_code";
         final String OWM_COUPON_NAME = "coupon_name";
         final String OWM_COUPON_LAST_ACTIVE_DATE = "last_active";
+        final String OWM_COUPON_DATE_CREATED = "date_created";
 
-
+        boolean found_data = false;
 
         try {
             JSONObject couponJson = new JSONObject(forecastJsonStr);
@@ -222,12 +229,14 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 String coupon_name = couponInfo.getString(OWM_COUPON_NAME);
                 coupon_name = Html.fromHtml(coupon_name).toString();
                 String last_active_date = couponInfo.getString(OWM_COUPON_LAST_ACTIVE_DATE);
+                String date_created = couponInfo.getString(OWM_COUPON_DATE_CREATED);
 
                 ContentValues couponValues = new ContentValues();
 
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_NAME, coupon_name);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_CODE, coupon_code);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE, last_active_date);
+                couponValues.put(WeatherContract.CouponEntry.COLUMN_DATE_CREATED, date_created);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_LOC_KEY, locationId);
 
                 cVVector.add(couponValues);
@@ -252,7 +261,9 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 // delete old data so we don't build up an endless history
                 //getContext().getContentResolver().delete(WeatherContract.CouponEntry.CONTENT_URI,WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE + " <= ?",new String[]{"NOW()"});
 
-                notifyCoupon();
+                //notifyCoupon();
+                found_data = true;
+
             }
 
             Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " Inserted");
@@ -261,6 +272,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             Log.e(LOG_TAG, e.getMessage(), e);
             e.printStackTrace();
         }
+        return found_data;
     }
 
     private void notifyCoupon() {
@@ -282,7 +294,9 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 String locationQuery = Utility.getPreferredLocation(context);
 
                 //Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
-                Uri couponUri = WeatherContract.CouponEntry.buildCouponLocation(locationQuery);
+                Uri couponUri = WeatherContract.CouponEntry.buildCouponLocationNotNotified(locationQuery);
+
+                Log.d(LOG_TAG,"notifyCoupon() calling Uri: "+couponUri.toString());
 
                 // we'll query our contentProvider, as always
                 Cursor cursor = context.getContentResolver().query(couponUri, NOTIFY_NEW_COUPONS, null, null, null);
@@ -340,6 +354,11 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putLong(lastNotificationKey, System.currentTimeMillis());
                     editor.commit();
+
+                    // update notified field so we don't keep notifying people with same coupons
+                    ContentValues notified_flag = new ContentValues();
+                    notified_flag.put(WeatherContract.CouponEntry.COLUMN_NOTIFIED,1);
+                    getContext().getContentResolver().update(WeatherContract.CouponEntry.CONTENT_URI,notified_flag,WeatherContract.CouponEntry.COLUMN_NOTIFIED + " = 0", null);
                 }
                 cursor.close();
             }
