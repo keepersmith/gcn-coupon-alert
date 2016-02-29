@@ -17,9 +17,25 @@ package com.example.android.gcncouponalert.app;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
+import android.util.Log;
 
+import org.apache.http.util.ByteArrayBuffer;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -243,6 +259,113 @@ public class Utility {
         return -1;
         */
     }
+
+    /*
+    private void saveImageToLocalStore(Bitmap finalBitmap) {
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir = new File(root + "/temp");
+        myDir.mkdirs();
+        String fname = "Profile_Image.png";
+        File file = new File (myDir, fname);
+        if (file.exists()) file.delete();
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            finalBitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+*/
+
+/*
+    private void loadImageFromLocalStore(String imageURI) {
+        try {
+            Uri uri = Uri.parse("file://"+Environment.getExternalStorageDirectory().toString() + "/temp/" + imageURI);
+            Bitmap bitmap = BitmapFactory.decodeStream(getActivity().getContentResolver().openInputStream(uri));
+            profileImage.setImageBitmap(bitmap);
+            profileImage.setTag("Other");
+            select_image_button.setText(R.string.button_remove_profile_picture);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+*/
+    public static Bitmap loadImageFromLocalStore(String imageURL, String image_extension) {
+        try {
+            String fileName = imageURL + "." + image_extension;
+
+            String root = Environment.getExternalStorageDirectory().toString();
+            File myDir = new File(root + "/temp");
+            myDir.mkdirs();
+
+            File file = new File(myDir, fileName);
+
+            if (file.exists()) {
+                FileInputStream is = new FileInputStream(file);
+                Bitmap bitmap = BitmapFactory.decodeStream(is);
+                is.close();
+                Log.d("loadImageFromLocalStore", "Found image: " + imageURL + "." + image_extension);
+                return bitmap;
+
+            } else {
+                Log.d("loadImageFromLocalStore", "Could not find image: "+imageURL+"."+image_extension);
+                return null;
+            }
+        } catch(IOException e) {
+            Log.d("loadImageFromLocalStore", "Error: " + e);
+            return null;
+        }
+    }
+    public static void downloader(String imageURL, String image_extension) {
+        try {
+            String fileName = imageURL+"."+image_extension;
+
+            String root = Environment.getExternalStorageDirectory().toString();
+            File myDir = new File(root + "/temp");
+            myDir.mkdirs();
+
+            File file = new File(myDir, fileName);
+
+            if (file.exists()) {
+                //FileInputStream is = new FileInputStream(file);
+                //Bitmap bitmap = BitmapFactory.decodeStream(is);
+                //is.close();
+
+                //return bitmap;
+                Log.d("Downloader", "Already have image: "+imageURL+"."+image_extension);
+
+            } else {
+                //String image_url_80x100 = R.string.coupon_image_url_prefix+couponInfo.getString(OWM_COUPON_URL_PATH)+"."+couponInfo.getString(OWM_COUPON_IMAGE_EXTENSION);
+                String full_imageURL = "http://img6.grocerycouponnetwork.com/images/coupons/img-"+fileName;
+                URL url = new URL(full_imageURL);
+                URLConnection con = url.openConnection();
+
+                InputStream is = con.getInputStream();
+                BufferedInputStream bis = new BufferedInputStream(is);
+
+                ByteArrayBuffer baf = new ByteArrayBuffer(50);
+                int current = 0;
+                while ((current = bis.read()) != -1) {
+                    baf.append((byte) current);
+                }
+
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.write(baf.toByteArray());
+                fos.close();
+                Log.d("Downloader", "Got image: " + full_imageURL);
+                //return BitmapFactory.decodeByteArray(baf.toByteArray(), 0, baf.toByteArray().length);
+            }
+
+        }catch(IOException e){
+            Log.d("Downloader", "Error: " + e);
+            //return null;
+        }
+
+    }
+
+
     public static int getArtResourceForCoupon(int coupon_code) {
         // Based on weather code data found at:
         // http://bugs.openweathermap.org/projects/api/wiki/Weather_Condition_Codes

@@ -211,6 +211,8 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         final String OWM_COUPON_NAME = "coupon_name";
         final String OWM_COUPON_LAST_ACTIVE_DATE = "last_active";
         final String OWM_COUPON_DATE_CREATED = "date_created";
+        final String OWM_COUPON_URL_PATH = "url_path";
+        final String OWM_COUPON_IMAGE_EXTENSION = "image_extension";
 
         boolean found_data = false;
 
@@ -230,6 +232,8 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 coupon_name = Html.fromHtml(coupon_name).toString();
                 String last_active_date = couponInfo.getString(OWM_COUPON_LAST_ACTIVE_DATE);
                 String date_created = couponInfo.getString(OWM_COUPON_DATE_CREATED);
+                String image_url_80x100 = couponInfo.getString(OWM_COUPON_URL_PATH);
+                String image_ext_80x100 = couponInfo.getString(OWM_COUPON_IMAGE_EXTENSION);
 
                 ContentValues couponValues = new ContentValues();
 
@@ -237,9 +241,13 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_CODE, coupon_code);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE, last_active_date);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_DATE_CREATED, date_created);
+                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100, image_url_80x100);
+                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100, image_ext_80x100);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_LOC_KEY, locationId);
 
                 cVVector.add(couponValues);
+
+                Utility.downloader(image_url_80x100, image_ext_80x100);
             }
 
             Time dayTime = new Time();
@@ -313,6 +321,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                     int iconId = Utility.getIconResourceForCoupon(coupon_code);
                     Resources resources = context.getResources();
                     Bitmap largeIcon = BitmapFactory.decodeResource(resources, Utility.getArtResourceForCoupon(coupon_code));
+                    //Bitmap largeIcon = Utility.downloader();
                     String title = context.getString(R.string.app_name);
 
                     // Define the text of the forecast.

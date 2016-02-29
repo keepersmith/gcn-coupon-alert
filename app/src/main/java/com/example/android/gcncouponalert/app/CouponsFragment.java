@@ -85,7 +85,10 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
             WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE,
             WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING,
             WeatherContract.LocationEntry.COLUMN_COORD_LAT,
-            WeatherContract.LocationEntry.COLUMN_COORD_LONG
+            WeatherContract.LocationEntry.COLUMN_COORD_LONG,
+            WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100,
+            WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100
+
     };
 
     static final int COL_COUPON_ID = 0;
@@ -95,6 +98,8 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
     static final int COL_LOCATION_SETTING = 4;
     static final int COL_COORD_LAT = 5;
     static final int COL_COORD_LONG = 6;
+    static final int COL_IMAGE_URL_80x100 = 7;
+    static final int COL_IMAGE_EXT_80x100 = 8;
 
     // These indices are tied to FORECAST_COLUMNS.  If FORECAST_COLUMNS changes, these
     // must change.

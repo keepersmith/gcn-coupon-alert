@@ -95,4 +95,7 @@
     <!-- Strings related to Notification preference -->
     <string name="pref_last_notification">last_notification</string>
 
+    <!-- coupon image URL prefix -->
+    <!--<string name="coupon_image_url_prefix">http://img6.grocerycouponnetwork.com/images/coupons/img-</string>-->
+
 </resources>

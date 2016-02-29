@@ -52,7 +52,8 @@ public class CouponsAdapter extends CursorAdapter {
         int layoutId = -1;
         switch (viewType) {
             case VIEW_TYPE_TODAY: {
-                layoutId = R.layout.list_item_forecast_today;
+                //layoutId = R.layout.list_item_forecast_today;
+                layoutId = R.layout.list_item_forecast;
                 break;
             }
             case VIEW_TYPE_FUTURE_DAY: {
@@ -94,17 +95,20 @@ public class CouponsAdapter extends CursorAdapter {
             }
         }
 
+        viewHolder.iconView.setImageBitmap(Utility.loadImageFromLocalStore(cursor.getString(CouponsFragment.COL_IMAGE_URL_80x100), cursor.getString(CouponsFragment.COL_IMAGE_EXT_80x100)));
+
         // Read date from cursor
         //long dateInMillis = cursor.getLong(CouponsFragment.COL_WEATHER_DATE);
         // Find TextView and set formatted date on it
         //viewHolder.dateView.setText(Utility.getFriendlyDayString(context, dateInMillis));
-        viewHolder.dateView.setText(cursor.getString(CouponsFragment.COL_COUPON_CODE));
+        //viewHolder.dateView.setText(cursor.getString(CouponsFragment.COL_COUPON_CODE));
+        viewHolder.dateView.setText(cursor.getString(CouponsFragment.COL_COUPON_NAME));
 
         // Read weather forecast from cursor
         //String description = cursor.getString(CouponsFragment.COL_WEATHER_DESC);
         // Find TextView and set weather forecast on it
         //viewHolder.descriptionView.setText(description);
-        viewHolder.descriptionView.setText(cursor.getString(CouponsFragment.COL_COUPON_NAME));
+        //viewHolder.descriptionView.setText(cursor.getString(CouponsFragment.COL_COUPON_NAME));
 
         // For accessibility, add a content description to the icon field
         //viewHolder.iconView.setContentDescription(description);
