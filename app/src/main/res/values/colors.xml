@@ -10,4 +10,8 @@
     <color name="gcncouponalert_blue">#ff1ca8f4</color>
     <color name="gcncouponalert_dark_blue">#0288D1</color>
 
+    <color name="gcncouponalert_light_green">#8df464</color>
+    <color name="gcncouponalert_green">#8dc63f</color>
+    <color name="gcncouponalert_dark_green">#35946b</color>
+
 </resources>

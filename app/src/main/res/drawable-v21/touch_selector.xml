@@ -13,5 +13,6 @@
         android:drawable="@color/gcncouponalert_light_blue" />
 
     <!-- Default, "just hangin' out" state. -->
-    <item android:drawable="@android:color/transparent" />
+    <!--<item android:drawable="@android:color/transparent" />-->
+    <item android:drawable="@android:color/white" />
 </selector>

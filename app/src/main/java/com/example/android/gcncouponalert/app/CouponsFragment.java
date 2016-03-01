@@ -87,7 +87,8 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
             WeatherContract.LocationEntry.COLUMN_COORD_LAT,
             WeatherContract.LocationEntry.COLUMN_COORD_LONG,
             WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100,
-            WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100
+            WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100,
+            WeatherContract.CouponEntry.COLUMN_COUPON_REMOTE_ID
 
     };
 
@@ -100,6 +101,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
     static final int COL_COORD_LONG = 6;
     static final int COL_IMAGE_URL_80x100 = 7;
     static final int COL_IMAGE_EXT_80x100 = 8;
+    static final int COL_REMOTE_ID = 9;
 
     // These indices are tied to FORECAST_COLUMNS.  If FORECAST_COLUMNS changes, these
     // must change.
@@ -174,7 +176,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
         mListView = (ListView) rootView.findViewById(R.id.listview_forecast);
         mListView.setAdapter(mCouponsAdapter);
         // We'll call our MainActivity
-        /*
+
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
@@ -183,16 +185,13 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                 // if it cannot seek to that position.
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
                 if (cursor != null) {
-                    String locationSetting = Utility.getPreferredLocation(getActivity());
-                    ((Callback) getActivity())
-                            .onItemSelected(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-                                    locationSetting, cursor.getLong(COL_WEATHER_DATE)
-                            ));
+                    //String locationSetting = Utility.getPreferredLocation(getActivity());
+                    ((Callback) getActivity()).onItemSelected(WeatherContract.CouponEntry.buildCouponUri(cursor.getLong(COL_COUPON_ID)));
                 }
                 mPosition = position;
             }
         });
-        */
+
 
         // If there's instance state, mine it for useful information.
         // The end-goal here is that the user never knows that turning their device sideways

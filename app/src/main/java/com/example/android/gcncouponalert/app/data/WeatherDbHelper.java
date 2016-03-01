@@ -29,7 +29,7 @@ import com.example.android.gcncouponalert.app.data.WeatherContract.CouponEntry;
 public class WeatherDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     static final String DATABASE_NAME = "gcn_coupon.db";
 
@@ -59,6 +59,7 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
                 CouponEntry.COLUMN_NOTIFIED + " INTEGER DEFAULT 0 NOT NULL, " +
                 CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100 + " TEXT, " +
                 CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100 + " TEXT, " +
+                CouponEntry.COLUMN_COUPON_REMOTE_ID + " INTEGER, " +
                 // Set up the location column as a foreign key to location table.
                 " FOREIGN KEY (" + CouponEntry.COLUMN_LOC_KEY + ") REFERENCES " +
                 LocationEntry.TABLE_NAME + " (" + LocationEntry._ID + ") " +

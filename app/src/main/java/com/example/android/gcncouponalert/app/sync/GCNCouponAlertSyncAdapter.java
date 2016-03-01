@@ -213,6 +213,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         final String OWM_COUPON_DATE_CREATED = "date_created";
         final String OWM_COUPON_URL_PATH = "url_path";
         final String OWM_COUPON_IMAGE_EXTENSION = "image_extension";
+        final String OWM_COUPON_REMOTE_ID = "remote_id";
 
         boolean found_data = false;
 
@@ -234,6 +235,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 String date_created = couponInfo.getString(OWM_COUPON_DATE_CREATED);
                 String image_url_80x100 = couponInfo.getString(OWM_COUPON_URL_PATH);
                 String image_ext_80x100 = couponInfo.getString(OWM_COUPON_IMAGE_EXTENSION);
+                String remote_id = couponInfo.getString(OWM_COUPON_REMOTE_ID);
 
                 ContentValues couponValues = new ContentValues();
 
@@ -243,6 +245,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_DATE_CREATED, date_created);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100, image_url_80x100);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100, image_ext_80x100);
+                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_REMOTE_ID, remote_id);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_LOC_KEY, locationId);
 
                 cVVector.add(couponValues);

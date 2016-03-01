@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -106,6 +107,7 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
 
     @Override
     public void onItemSelected(Uri contentUri) {
+        Log.d("onItemSelected()","Called with: "+contentUri.toString());
         if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
@@ -120,9 +122,15 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
                     .replace(R.id.weather_detail_container, fragment, DETAILFRAGMENT_TAG)
                     .commit();
         } else {
+            Uri uriUrl = Uri.parse("http://www.grocerycouponnetwork.com/coupons/?cid=");
+            Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
+            startActivity(launchBrowser);
+            Log.d("onItemSelected()", "Launched: "+uriUrl.toString());
+            /*
             Intent intent = new Intent(this, DetailActivity.class)
                     .setData(contentUri);
             startActivity(intent);
+            */
         }
     }
 }

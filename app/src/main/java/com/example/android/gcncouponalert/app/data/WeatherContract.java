@@ -193,6 +193,7 @@ public class WeatherContract {
         public static final String COLUMN_NOTIFIED = "notified_flag";
         public static final String COLUMN_COUPON_IMAGE_URL_80x100 = "url_path";
         public static final String COLUMN_COUPON_IMAGE_EXT_80x100 = "image_extension";
+        public static final String COLUMN_COUPON_REMOTE_ID = "remote_id";
 
         public static Uri buildCouponUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);

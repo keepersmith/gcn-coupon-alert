@@ -2,8 +2,8 @@
 
    <!-- Base application theme. -->
     <style name="AppTheme" parent="@style/Theme.AppCompat.Light.DarkActionBar">
-        <item name="colorPrimary">@color/gcncouponalert_blue</item>
-        <item name="colorPrimaryDark">@color/gcncouponalert_dark_blue</item>
+        <item name="colorPrimary">@color/gcncouponalert_green</item>
+        <item name="colorPrimaryDark">@color/gcncouponalert_dark_green</item>
     </style>
 
     <!-- Main activity theme. -->
@@ -18,7 +18,8 @@
     <!-- main activity action bar styles -->
     <style name="ActionBar.Solid.GCNCouponAlert.NoTitle" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
         <item name="displayOptions">useLogo|showHome</item>
-        <item name="logo">@drawable/ic_logo</item>
+        <!--<item name="logo">@drawable/ic_logo</item>-->
+        <item name="logo">@drawable/gcnlogo_grbg</item>
     </style>
 
     <!-- Style for forecast listview -->
