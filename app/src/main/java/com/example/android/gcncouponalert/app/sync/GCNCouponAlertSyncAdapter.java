@@ -62,6 +62,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final int COUPON_NOTIFICATION_ID = 3005;
 
     private static final String[] NOTIFY_NEW_COUPONS = new String[] {
+            WeatherContract.CouponEntry.TABLE_NAME+"."+WeatherContract.CouponEntry._ID,
             WeatherContract.CouponEntry.COLUMN_COUPON_CODE,
             WeatherContract.CouponEntry.COLUMN_COUPON_NAME
     };
@@ -79,8 +80,9 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final int INDEX_MIN_TEMP = 2;
     private static final int INDEX_SHORT_DESC = 3;
 
-    private static final int INDEX_COUPON_CODE = 0;
-    private static final int INDEX_COUPON_NAME = 1;
+    private static final int INDEX_COUPON_ID = 0;
+    private static final int INDEX_COUPON_CODE = 1;
+    private static final int INDEX_COUPON_NAME = 2;
 
     public GCNCouponAlertSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
@@ -214,6 +216,9 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         final String OWM_COUPON_URL_PATH = "url_path";
         final String OWM_COUPON_IMAGE_EXTENSION = "image_extension";
         final String OWM_COUPON_REMOTE_ID = "remote_id";
+        final String OWM_COUPON_SLOT_INFO = "slot_info";
+        final String OWM_COUPON_CATEGORY_CODE = "category_code";
+        final String OWM_COUPON_BRAND_CODE = "brand_code";
 
         boolean found_data = false;
 
@@ -236,6 +241,9 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 String image_url_80x100 = couponInfo.getString(OWM_COUPON_URL_PATH);
                 String image_ext_80x100 = couponInfo.getString(OWM_COUPON_IMAGE_EXTENSION);
                 String remote_id = couponInfo.getString(OWM_COUPON_REMOTE_ID);
+                String slot_info = couponInfo.getString(OWM_COUPON_SLOT_INFO);
+                String category_code = couponInfo.getString(OWM_COUPON_CATEGORY_CODE);
+                String brand_code = couponInfo.getString(OWM_COUPON_BRAND_CODE);
 
                 ContentValues couponValues = new ContentValues();
 
@@ -246,6 +254,9 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100, image_url_80x100);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100, image_ext_80x100);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_REMOTE_ID, remote_id);
+                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_SLOT_INFO, slot_info);
+                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_CATEGORY_CODE, category_code);
+                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_BRAND_CODE, brand_code);
                 couponValues.put(WeatherContract.CouponEntry.COLUMN_LOC_KEY, locationId);
 
                 cVVector.add(couponValues);
@@ -313,6 +324,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 Cursor cursor = context.getContentResolver().query(couponUri, NOTIFY_NEW_COUPONS, null, null, WeatherContract.CouponEntry.COLUMN_DATE_CREATED + " DESC");
 
                 if (cursor.moveToFirst()) {
+                    long coupon_id = cursor.getLong(INDEX_COUPON_ID);
                     int coupon_code = cursor.getInt(INDEX_COUPON_CODE);
                     String coupon_name = cursor.getString(INDEX_COUPON_NAME);
                     //int weatherId = cursor.getInt(INDEX_WEATHER_ID);
@@ -328,7 +340,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                     String title = context.getString(R.string.app_name);
 
                     // Define the text of the forecast.
-                    String contentText = String.format(context.getString(R.string.format_notification),coupon_name);
+                    String contentText = String.format(context.getString(R.string.format_notification), coupon_name);
 
                     // NotificationCompatBuilder is a very convenient way to build backward-compatible
                     // notifications.  Just throw in some data.
@@ -343,6 +355,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                     // Make something interesting happen when the user clicks on the notification.
                     // In this case, opening the com.example.android.gcncouponalert.app is sufficient.
                     Intent resultIntent = new Intent(context, MainActivity.class);
+                    resultIntent.putExtra("coupon_id",coupon_id);
 
                     // The stack builder object will contain an artificial back stack for the
                     // started Activity.

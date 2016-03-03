@@ -209,7 +209,6 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
             // swapout in onLoadFinished.
             mPosition = savedInstanceState.getInt(SELECTED_KEY);
         }
-
         mCouponsAdapter.setUseTodayLayout(mUseTodayLayout);
 
         return rootView;
@@ -299,17 +298,42 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                 COUPONS_COLUMNS,
                 null,
                 null,
-                WeatherContract.CouponEntry.COLUMN_DATE_CREATED + " DESC");
+                WeatherContract.CouponEntry.COLUMN_COUPON_SLOT_INFO);
+        //WeatherContract.CouponEntry.COLUMN_DATE_CREATED + " DESC");
 
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         mCouponsAdapter.swapCursor(data);
+
+        Bundle extras = getActivity().getIntent().getExtras();
+        if(extras != null) {
+            if(extras.containsKey("coupon_id")) {
+                long coupon_id = extras.getLong("coupon_id");
+                Log.d(LOG_TAG,"Intent! coupon_id: "+coupon_id);
+                if (null != mCouponsAdapter) {
+                    Cursor c = mCouponsAdapter.getCursor();
+                    if (null != c) {
+                        if (c.moveToFirst()) {
+                            while (!c.isAfterLast()) {
+                                if (c.getLong(COL_COUPON_ID) == coupon_id) {
+                                    mPosition = c.getPosition();
+                                    break;
+                                }
+                                c.moveToNext();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if (mPosition != ListView.INVALID_POSITION) {
             // If we don't need to restart the loader, and there's a desired position to restore
             // to, do so now.
-            mListView.smoothScrollToPosition(mPosition);
+            int offset = 0;
+            mListView.smoothScrollToPositionFromTop(mPosition,offset,500);
         }
     }
 

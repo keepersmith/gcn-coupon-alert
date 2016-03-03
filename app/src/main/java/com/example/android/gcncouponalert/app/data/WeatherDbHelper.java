@@ -29,7 +29,7 @@ import com.example.android.gcncouponalert.app.data.WeatherContract.CouponEntry;
 public class WeatherDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 8;
 
     static final String DATABASE_NAME = "gcn_coupon.db";
 
@@ -52,14 +52,17 @@ public class WeatherDbHelper extends SQLiteOpenHelper {
         final String SQL_CREATE_COUPON_TABLE = "CREATE TABLE " + CouponEntry.TABLE_NAME + " (" +
                 CouponEntry._ID + " INTEGER PRIMARY KEY," +
                 CouponEntry.COLUMN_LOC_KEY + " INTEGER NOT NULL, " +
-                CouponEntry.COLUMN_COUPON_CODE + " TEXT UNIQUE ON CONFLICT IGNORE NOT NULL, " +
+                CouponEntry.COLUMN_COUPON_CODE + " TEXT UNIQUE ON CONFLICT REPLACE NOT NULL, " +
                 CouponEntry.COLUMN_COUPON_NAME + " TEXT NOT NULL, " +
                 CouponEntry.COLUMN_LAST_ACTIVE_DATE + " DATETIME NOT NULL, " +
                 CouponEntry.COLUMN_DATE_CREATED + " DATETIME NOT NULL, " +
                 CouponEntry.COLUMN_NOTIFIED + " INTEGER DEFAULT 0 NOT NULL, " +
                 CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100 + " TEXT, " +
                 CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100 + " TEXT, " +
-                CouponEntry.COLUMN_COUPON_REMOTE_ID + " INTEGER, " +
+                CouponEntry.COLUMN_COUPON_REMOTE_ID + " INTEGER DEFAULT 0, " +
+                CouponEntry.COLUMN_COUPON_SLOT_INFO + " INTEGER DEFAULT 0, " +
+                CouponEntry.COLUMN_COUPON_BRAND_CODE + " INTEGER, " +
+                CouponEntry.COLUMN_COUPON_CATEGORY_CODE + " INTEGER, " +
                 // Set up the location column as a foreign key to location table.
                 " FOREIGN KEY (" + CouponEntry.COLUMN_LOC_KEY + ") REFERENCES " +
                 LocationEntry.TABLE_NAME + " (" + LocationEntry._ID + ") " +

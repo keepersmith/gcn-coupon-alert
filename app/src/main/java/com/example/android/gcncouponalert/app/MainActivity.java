@@ -42,6 +42,23 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
         mLocation = Utility.getPreferredLocation(this);
 
         setContentView(R.layout.activity_main);
+
+        /*
+        Bundle extras = getIntent().getExtras();
+        if(extras != null) {
+            if(extras.containsKey("coupon_id")) {
+                int coupon_id = extras.getInt("coupon_id");
+                Log.d(LOG_TAG,"Intent! coupon_id: "+coupon_id);
+                //setContentView(R.layout.viewmain);
+                // extract the extra-data in the Notification
+                //String msg = extras.getString("NotificationMessage");
+                //txtView = (TextView) findViewById(R.id.txtMessage);
+                //txtView.setText(msg);
+            }
+        }
+        */
+
+        /*
         if (findViewById(R.id.weather_detail_container) != null) {
             // The detail container view will be present only in the large-screen layouts
             // (res/layout-sw600dp). If this view is present, then the activity should be
@@ -56,16 +73,36 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
                         .commit();
             }
         } else {
+        */
             mTwoPane = false;
             getSupportActionBar().setElevation(0f);
-        }
+        //}
 
         CouponsFragment couponsFragment =  ((CouponsFragment)getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_forecast));
         couponsFragment.setUseTodayLayout(!mTwoPane);
 
         GCNCouponAlertSyncAdapter.initializeSyncAdapter(this);
+
+        //onNewIntent(getIntent());
     }
+
+    /*
+    @Override
+    public void onNewIntent(Intent intent){
+        Bundle extras = intent.getExtras();
+        if(extras != null) {
+            if(extras.containsKey("coupon_id")) {
+                int coupon_id = extras.getInt("coupon_id");
+                setContentView(R.layout.viewmain);
+                // extract the extra-data in the Notification
+                String msg = extras.getString("NotificationMessage");
+                txtView = (TextView) findViewById(R.id.txtMessage);
+                txtView.setText(msg);
+            }
+        }
+    }
+    */
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -111,6 +148,7 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
     @Override
     public void onItemSelected(Uri contentUri) {
         Log.d("onItemSelected()","Called with: "+contentUri.toString());
+        /*
         if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
@@ -125,6 +163,7 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
                     .replace(R.id.weather_detail_container, fragment, DETAILFRAGMENT_TAG)
                     .commit();
         } else {
+        */
             Cursor cursor = getContentResolver().query(contentUri, new String[]{WeatherContract.CouponEntry.COLUMN_COUPON_REMOTE_ID}, null, null, null);
             //SQLiteQueryBuilder temp_test = new SQLiteQueryBuilder();
             //temp_test.buildQuery();
@@ -138,12 +177,12 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
             } else {
                 Log.d("onItemSelected()", "Failed to Launch");
             }
-            cursor.close();
+        cursor.close();
             /*
             Intent intent = new Intent(this, DetailActivity.class)
                     .setData(contentUri);
             startActivity(intent);
             */
-        }
+        //}
     }
 }

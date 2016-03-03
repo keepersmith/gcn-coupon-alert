@@ -194,6 +194,9 @@ public class WeatherContract {
         public static final String COLUMN_COUPON_IMAGE_URL_80x100 = "url_path";
         public static final String COLUMN_COUPON_IMAGE_EXT_80x100 = "image_extension";
         public static final String COLUMN_COUPON_REMOTE_ID = "remote_id";
+        public static final String COLUMN_COUPON_SLOT_INFO = "slot_info";
+        public static final String COLUMN_COUPON_CATEGORY_CODE = "category_code";
+        public static final String COLUMN_COUPON_BRAND_CODE = "brand_code";
 
         public static Uri buildCouponUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
