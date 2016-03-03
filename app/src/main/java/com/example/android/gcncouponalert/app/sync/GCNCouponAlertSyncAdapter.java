@@ -310,7 +310,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 Log.d(LOG_TAG,"notifyCoupon() calling Uri: "+couponUri.toString());
 
                 // we'll query our contentProvider, as always
-                Cursor cursor = context.getContentResolver().query(couponUri, NOTIFY_NEW_COUPONS, null, null, null);
+                Cursor cursor = context.getContentResolver().query(couponUri, NOTIFY_NEW_COUPONS, null, null, WeatherContract.CouponEntry.COLUMN_DATE_CREATED + " DESC");
 
                 if (cursor.moveToFirst()) {
                     int coupon_code = cursor.getInt(INDEX_COUPON_CODE);
@@ -334,7 +334,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                     // notifications.  Just throw in some data.
                     NotificationCompat.Builder mBuilder =
                             new NotificationCompat.Builder(getContext())
-                                    .setColor(resources.getColor(R.color.gcncouponalert_light_blue))
+                                    .setColor(resources.getColor(R.color.gcncouponalert_light_green))
                                     .setSmallIcon(iconId)
                                     .setLargeIcon(largeIcon)
                                     .setContentTitle(title)
@@ -369,8 +369,8 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
                     // update notified field so we don't keep notifying people with same coupons
                     ContentValues notified_flag = new ContentValues();
-                    notified_flag.put(WeatherContract.CouponEntry.COLUMN_NOTIFIED,1);
-                    getContext().getContentResolver().update(WeatherContract.CouponEntry.CONTENT_URI,notified_flag,WeatherContract.CouponEntry.COLUMN_NOTIFIED + " = 0", null);
+                    notified_flag.put(WeatherContract.CouponEntry.COLUMN_NOTIFIED, 1);
+                    getContext().getContentResolver().update(WeatherContract.CouponEntry.CONTENT_URI, notified_flag, WeatherContract.CouponEntry.COLUMN_NOTIFIED + " = 0", null);
                 }
                 cursor.close();
             }

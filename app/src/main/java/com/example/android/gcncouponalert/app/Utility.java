@@ -306,7 +306,7 @@ public class Utility {
                 FileInputStream is = new FileInputStream(file);
                 Bitmap bitmap = BitmapFactory.decodeStream(is);
                 is.close();
-                Log.d("loadImageFromLocalStore", "Found image: " + imageURL + "." + image_extension);
+                //Log.d("loadImageFromLocalStore", "Found image: " + imageURL + "." + image_extension);
                 return bitmap;
 
             } else {
@@ -334,7 +334,7 @@ public class Utility {
                 //is.close();
 
                 //return bitmap;
-                Log.d("Downloader", "Already have image: "+imageURL+"."+image_extension);
+                //Log.d("Downloader", "Already have image: "+imageURL+"."+image_extension);
 
             } else {
                 //String image_url_80x100 = R.string.coupon_image_url_prefix+couponInfo.getString(OWM_COUPON_URL_PATH)+"."+couponInfo.getString(OWM_COUPON_IMAGE_EXTENSION);

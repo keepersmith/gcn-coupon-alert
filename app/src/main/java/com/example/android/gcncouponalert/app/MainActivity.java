@@ -16,6 +16,8 @@
 package com.example.android.gcncouponalert.app;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -23,6 +25,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.android.gcncouponalert.app.data.WeatherContract;
 import com.example.android.gcncouponalert.app.sync.GCNCouponAlertSyncAdapter;
 
 public class MainActivity extends ActionBarActivity implements CouponsFragment.Callback {
@@ -122,10 +125,20 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
                     .replace(R.id.weather_detail_container, fragment, DETAILFRAGMENT_TAG)
                     .commit();
         } else {
-            Uri uriUrl = Uri.parse("http://www.grocerycouponnetwork.com/coupons/?cid=");
-            Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
-            startActivity(launchBrowser);
-            Log.d("onItemSelected()", "Launched: "+uriUrl.toString());
+            Cursor cursor = getContentResolver().query(contentUri, new String[]{WeatherContract.CouponEntry.COLUMN_COUPON_REMOTE_ID}, null, null, null);
+            //SQLiteQueryBuilder temp_test = new SQLiteQueryBuilder();
+            //temp_test.buildQuery();
+            if (cursor.moveToFirst()) {
+                String remote_id = cursor.getString(0);
+                Uri uriUrl = Uri.parse("http://www.grocerycouponnetwork.com/coupons/?").buildUpon().appendQueryParameter("cid", remote_id).build();
+                //uriUrl.
+                Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
+                startActivity(launchBrowser);
+                Log.d("onItemSelected()", "Launched: " + uriUrl.toString());
+            } else {
+                Log.d("onItemSelected()", "Failed to Launch");
+            }
+            cursor.close();
             /*
             Intent intent = new Intent(this, DetailActivity.class)
                     .setData(contentUri);

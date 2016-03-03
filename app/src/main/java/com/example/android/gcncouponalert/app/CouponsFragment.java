@@ -186,7 +186,13 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
                 if (cursor != null) {
                     //String locationSetting = Utility.getPreferredLocation(getActivity());
-                    ((Callback) getActivity()).onItemSelected(WeatherContract.CouponEntry.buildCouponUri(cursor.getLong(COL_COUPON_ID)));
+                    //((Callback) getActivity()).onItemSelected(WeatherContract.CouponEntry.buildCouponUri(cursor.getLong(COL_COUPON_ID)));
+                    String remote_id = cursor.getString(COL_REMOTE_ID);
+                    Uri uriUrl = Uri.parse("http://www.grocerycouponnetwork.com/coupons/?").buildUpon().appendQueryParameter("cid", remote_id).build();
+                    //uriUrl.
+                    Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
+                    startActivity(launchBrowser);
+                    Log.d(LOG_TAG,"Launched: " + uriUrl.toString());
                 }
                 mPosition = position;
             }
@@ -293,7 +299,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                 COUPONS_COLUMNS,
                 null,
                 null,
-                null);
+                WeatherContract.CouponEntry.COLUMN_DATE_CREATED + " DESC");
 
     }
 
