@@ -19,21 +19,21 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.example.android.gcncouponalert.app.data.WeatherContract.LocationEntry;
-import com.example.android.gcncouponalert.app.data.WeatherContract.WeatherEntry;
-import com.example.android.gcncouponalert.app.data.WeatherContract.CouponEntry;
+import com.example.android.gcncouponalert.app.data.CouponsContract.LocationEntry;
+import com.example.android.gcncouponalert.app.data.CouponsContract.WeatherEntry;
+import com.example.android.gcncouponalert.app.data.CouponsContract.CouponEntry;
 
 /**
  * Manages a local database for weather data.
  */
-public class WeatherDbHelper extends SQLiteOpenHelper {
+public class CouponsDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
     private static final int DATABASE_VERSION = 8;
 
     static final String DATABASE_NAME = "gcn_coupon.db";
 
-    public WeatherDbHelper(Context context) {
+    public CouponsDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 

@@ -32,7 +32,7 @@ import com.example.android.gcncouponalert.app.BuildConfig;
 import com.example.android.gcncouponalert.app.MainActivity;
 import com.example.android.gcncouponalert.app.R;
 import com.example.android.gcncouponalert.app.Utility;
-import com.example.android.gcncouponalert.app.data.WeatherContract;
+import com.example.android.gcncouponalert.app.data.CouponsContract;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -53,25 +53,26 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
     //public static final int SYNC_INTERVAL = 60 * 180;
     //public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
 
-    public static final int SYNC_INTERVAL = 60;
+    public static final int SYNC_INTERVAL = 60 * 180;
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
 
     //private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
+    private static final long NOTIFICATION_COOLDOWN_MILLIS = 1000 * 60;
     private static final long ONE_MINUTE_IN_MILLIS = 1000 * 60;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
     private static final int COUPON_NOTIFICATION_ID = 3005;
 
     private static final String[] NOTIFY_NEW_COUPONS = new String[] {
-            WeatherContract.CouponEntry.TABLE_NAME+"."+WeatherContract.CouponEntry._ID,
-            WeatherContract.CouponEntry.COLUMN_COUPON_CODE,
-            WeatherContract.CouponEntry.COLUMN_COUPON_NAME
+            CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry._ID,
+            CouponsContract.CouponEntry.COLUMN_COUPON_CODE,
+            CouponsContract.CouponEntry.COLUMN_COUPON_NAME
     };
 
     private static final String[] NOTIFY_WEATHER_PROJECTION = new String[] {
-            WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
-            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
-            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
-            WeatherContract.WeatherEntry.COLUMN_SHORT_DESC
+            CouponsContract.WeatherEntry.COLUMN_WEATHER_ID,
+            CouponsContract.WeatherEntry.COLUMN_MAX_TEMP,
+            CouponsContract.WeatherEntry.COLUMN_MIN_TEMP,
+            CouponsContract.WeatherEntry.COLUMN_SHORT_DESC
     };
 
     // these indices must match the projection
@@ -182,6 +183,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             }
         }
         if (found_data) {
+            getContext().getContentResolver().notifyChange(CouponsContract.CouponEntry.CONTENT_URI, null);
             notifyCoupon();
         }
         return;
@@ -247,17 +249,17 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
                 ContentValues couponValues = new ContentValues();
 
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_NAME, coupon_name);
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_CODE, coupon_code);
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE, last_active_date);
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_DATE_CREATED, date_created);
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100, image_url_80x100);
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100, image_ext_80x100);
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_REMOTE_ID, remote_id);
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_SLOT_INFO, slot_info);
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_CATEGORY_CODE, category_code);
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_COUPON_BRAND_CODE, brand_code);
-                couponValues.put(WeatherContract.CouponEntry.COLUMN_LOC_KEY, locationId);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_NAME, coupon_name);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_CODE, coupon_code);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE, last_active_date);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_DATE_CREATED, date_created);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100, image_url_80x100);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100, image_ext_80x100);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_REMOTE_ID, remote_id);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_SLOT_INFO, slot_info);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_CATEGORY_CODE, category_code);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_BRAND_CODE, brand_code);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_LOC_KEY, locationId);
 
                 cVVector.add(couponValues);
 
@@ -278,10 +280,10 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             if ( cVVector.size() > 0 ) {
                 ContentValues[] cvArray = new ContentValues[cVVector.size()];
                 cVVector.toArray(cvArray);
-                getContext().getContentResolver().bulkInsert(WeatherContract.CouponEntry.CONTENT_URI, cvArray);
+                getContext().getContentResolver().bulkInsert(CouponsContract.CouponEntry.CONTENT_URI, cvArray);
 
                 // delete old data so we don't build up an endless history
-                //getContext().getContentResolver().delete(WeatherContract.CouponEntry.CONTENT_URI,WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE + " <= ?",new String[]{"NOW()"});
+                //getContext().getContentResolver().delete(CouponsContract.CouponEntry.CONTENT_URI,CouponsContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE + " <= ?",new String[]{"NOW()"});
 
                 //notifyCoupon();
                 found_data = true;
@@ -311,17 +313,17 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             String lastNotificationKey = context.getString(R.string.pref_last_notification);
             long lastSync = prefs.getLong(lastNotificationKey, 0);
 
-            if (System.currentTimeMillis() - lastSync >= ONE_MINUTE_IN_MILLIS) {
+            if (System.currentTimeMillis() - lastSync >= NOTIFICATION_COOLDOWN_MILLIS) {
                 // Last sync was more than 1 day ago, let's send a notification with the weather.
                 String locationQuery = Utility.getPreferredLocation(context);
 
-                //Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
-                Uri couponUri = WeatherContract.CouponEntry.buildCouponLocationNotNotified(locationQuery);
+                //Uri weatherUri = CouponsContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
+                Uri couponUri = CouponsContract.CouponEntry.buildCouponLocationNotNotified(locationQuery);
 
                 Log.d(LOG_TAG,"notifyCoupon() calling Uri: "+couponUri.toString());
 
                 // we'll query our contentProvider, as always
-                Cursor cursor = context.getContentResolver().query(couponUri, NOTIFY_NEW_COUPONS, null, null, WeatherContract.CouponEntry.COLUMN_DATE_CREATED + " DESC");
+                Cursor cursor = context.getContentResolver().query(couponUri, NOTIFY_NEW_COUPONS, null, null, CouponsContract.CouponEntry.COLUMN_DATE_CREATED + " DESC");
 
                 if (cursor.moveToFirst()) {
                     long coupon_id = cursor.getLong(INDEX_COUPON_ID);
@@ -382,13 +384,15 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
                     // update notified field so we don't keep notifying people with same coupons
                     ContentValues notified_flag = new ContentValues();
-                    notified_flag.put(WeatherContract.CouponEntry.COLUMN_NOTIFIED, 1);
-                    getContext().getContentResolver().update(WeatherContract.CouponEntry.CONTENT_URI, notified_flag, WeatherContract.CouponEntry.COLUMN_NOTIFIED + " = 0", null);
+                    notified_flag.put(CouponsContract.CouponEntry.COLUMN_NOTIFIED, 1);
+                    getContext().getContentResolver().update(CouponsContract.CouponEntry.CONTENT_URI, notified_flag, CouponsContract.CouponEntry.COLUMN_NOTIFIED + " = 0", null);
                 }
                 cursor.close();
             }
         }
     }
+
+    /*
     private void notifyWeather() {
         Context context = getContext();
         //checking the last update and notify if it' the first of the day
@@ -406,7 +410,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 // Last sync was more than 1 day ago, let's send a notification with the weather.
                 String locationQuery = Utility.getPreferredLocation(context);
 
-                Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
+                Uri weatherUri = CouponsContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
 
                 // we'll query our contentProvider, as always
                 Cursor cursor = context.getContentResolver().query(weatherUri, NOTIFY_WEATHER_PROJECTION, null, null, null);
@@ -470,6 +474,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             }
         }
     }
+    */
 
     /**
      * Helper method to handle insertion of a new location in the weather database.
@@ -485,14 +490,14 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
         // First, check if the location with this city name exists in the db
         Cursor locationCursor = getContext().getContentResolver().query(
-                WeatherContract.LocationEntry.CONTENT_URI,
-                new String[]{WeatherContract.LocationEntry._ID},
-                WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
+                CouponsContract.LocationEntry.CONTENT_URI,
+                new String[]{CouponsContract.LocationEntry._ID},
+                CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ?",
                 new String[]{locationSetting},
                 null);
 
         if (locationCursor.moveToFirst()) {
-            int locationIdIndex = locationCursor.getColumnIndex(WeatherContract.LocationEntry._ID);
+            int locationIdIndex = locationCursor.getColumnIndex(CouponsContract.LocationEntry._ID);
             locationId = locationCursor.getLong(locationIdIndex);
         } else {
             // Now that the content provider is set up, inserting rows of data is pretty simple.
@@ -501,15 +506,15 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
             // Then add the data, along with the corresponding name of the data type,
             // so the content provider knows what kind of value is being inserted.
-            //locationValues.put(WeatherContract.LocationEntry.COLUMN_CITY_NAME, cityName);
-            locationValues.put(WeatherContract.LocationEntry.COLUMN_CITY_NAME, "unknown");
-            locationValues.put(WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING, locationSetting);
-            locationValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LAT, "unknown");
-            locationValues.put(WeatherContract.LocationEntry.COLUMN_COORD_LONG, "unknown");
+            //locationValues.put(CouponsContract.LocationEntry.COLUMN_CITY_NAME, cityName);
+            locationValues.put(CouponsContract.LocationEntry.COLUMN_CITY_NAME, "unknown");
+            locationValues.put(CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING, locationSetting);
+            locationValues.put(CouponsContract.LocationEntry.COLUMN_COORD_LAT, "unknown");
+            locationValues.put(CouponsContract.LocationEntry.COLUMN_COORD_LONG, "unknown");
 
             // Finally, insert location data into the database.
             Uri insertedUri = getContext().getContentResolver().insert(
-                    WeatherContract.LocationEntry.CONTENT_URI,
+                    CouponsContract.LocationEntry.CONTENT_URI,
                     locationValues
             );
 
@@ -526,14 +531,12 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
      * Helper method to schedule the sync adapter periodic execution
      */
     public static void configurePeriodicSync(Context context, int syncInterval, int flexTime) {
+        Log.d(LOG_TAG, "configurePeriodicSync");
         Account account = getSyncAccount(context);
         String authority = context.getString(R.string.content_authority);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             // we can enable inexact timers in our periodic sync
-            SyncRequest request = new SyncRequest.Builder().
-                    syncPeriodic(syncInterval, flexTime).
-                    setSyncAdapter(account, authority).
-                    setExtras(new Bundle()).build();
+            SyncRequest request = new SyncRequest.Builder().syncPeriodic(syncInterval, flexTime).setSyncAdapter(account, authority).setExtras(new Bundle()).build();
             ContentResolver.requestSync(request);
         } else {
             ContentResolver.addPeriodicSync(account,
@@ -549,6 +552,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         Bundle bundle = new Bundle();
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        Log.d(LOG_TAG, "syncImmediately");
         ContentResolver.requestSync(getSyncAccount(context),
                 context.getString(R.string.content_authority), bundle);
     }
@@ -562,7 +566,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
      * @return a fake account.
      */
     public static Account getSyncAccount(Context context) {
-        Log.d(LOG_TAG, "getSyncAccount");
+        Log.d(LOG_TAG, "  getSyncAccount");
         // Get an instance of the Android account manager
         AccountManager accountManager =
                 (AccountManager) context.getSystemService(Context.ACCOUNT_SERVICE);
@@ -605,6 +609,8 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
          */
         ContentResolver.setSyncAutomatically(newAccount, context.getString(R.string.content_authority), true);
 
+        // we are going to syncImmediately...so cancel the sync setup by addAccountExplicitly
+        //ContentResolver.cancelSync(newAccount, context.getString(R.string.content_authority));
         /*
          * Finally, let's do a sync to get things started
          */
@@ -613,6 +619,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     public static void initializeSyncAdapter(Context context) {
+        Log.d(LOG_TAG, "initializeSyncAdapter");
         getSyncAccount(context);
     }
 }

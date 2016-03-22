@@ -17,7 +17,6 @@ package com.example.android.gcncouponalert.app;
 
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -25,7 +24,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.example.android.gcncouponalert.app.data.WeatherContract;
+import com.example.android.gcncouponalert.app.data.CouponsContract;
 import com.example.android.gcncouponalert.app.sync.GCNCouponAlertSyncAdapter;
 
 public class MainActivity extends ActionBarActivity implements CouponsFragment.Callback {
@@ -164,7 +163,7 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
                     .commit();
         } else {
         */
-            Cursor cursor = getContentResolver().query(contentUri, new String[]{WeatherContract.CouponEntry.COLUMN_COUPON_REMOTE_ID}, null, null, null);
+            Cursor cursor = getContentResolver().query(contentUri, new String[]{CouponsContract.CouponEntry.COLUMN_COUPON_REMOTE_ID}, null, null, null);
             //SQLiteQueryBuilder temp_test = new SQLiteQueryBuilder();
             //temp_test.buildQuery();
             if (cursor.moveToFirst()) {

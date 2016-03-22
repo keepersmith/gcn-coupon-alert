@@ -33,7 +33,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import com.example.android.gcncouponalert.app.data.WeatherContract;
+import com.example.android.gcncouponalert.app.data.CouponsContract;
 import com.example.android.gcncouponalert.app.sync.GCNCouponAlertSyncAdapter;
 
 /**
@@ -61,15 +61,15 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
             // On the one hand, that's annoying.  On the other, you can search the weather table
             // using the location set by the user, which is only in the Location table.
             // So the convenience is worth it.
-            WeatherContract.WeatherEntry.TABLE_NAME + "." + WeatherContract.WeatherEntry._ID,
-            WeatherContract.WeatherEntry.COLUMN_DATE,
-            WeatherContract.WeatherEntry.COLUMN_SHORT_DESC,
-            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
-            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
-            WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING,
-            WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
-            WeatherContract.LocationEntry.COLUMN_COORD_LAT,
-            WeatherContract.LocationEntry.COLUMN_COORD_LONG
+            CouponsContract.WeatherEntry.TABLE_NAME + "." + CouponsContract.WeatherEntry._ID,
+            CouponsContract.WeatherEntry.COLUMN_DATE,
+            CouponsContract.WeatherEntry.COLUMN_SHORT_DESC,
+            CouponsContract.WeatherEntry.COLUMN_MAX_TEMP,
+            CouponsContract.WeatherEntry.COLUMN_MIN_TEMP,
+            CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING,
+            CouponsContract.WeatherEntry.COLUMN_WEATHER_ID,
+            CouponsContract.LocationEntry.COLUMN_COORD_LAT,
+            CouponsContract.LocationEntry.COLUMN_COORD_LONG
     };
 
     private static final String[] COUPONS_COLUMNS = {
@@ -79,16 +79,16 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
             // On the one hand, that's annoying.  On the other, you can search the weather table
             // using the location set by the user, which is only in the Location table.
             // So the convenience is worth it.
-            WeatherContract.CouponEntry.TABLE_NAME + "." + WeatherContract.CouponEntry._ID,
-            WeatherContract.CouponEntry.COLUMN_COUPON_CODE,
-            WeatherContract.CouponEntry.COLUMN_COUPON_NAME,
-            WeatherContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE,
-            WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING,
-            WeatherContract.LocationEntry.COLUMN_COORD_LAT,
-            WeatherContract.LocationEntry.COLUMN_COORD_LONG,
-            WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100,
-            WeatherContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100,
-            WeatherContract.CouponEntry.COLUMN_COUPON_REMOTE_ID
+            CouponsContract.CouponEntry.TABLE_NAME + "." + CouponsContract.CouponEntry._ID,
+            CouponsContract.CouponEntry.COLUMN_COUPON_CODE,
+            CouponsContract.CouponEntry.COLUMN_COUPON_NAME,
+            CouponsContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE,
+            CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING,
+            CouponsContract.LocationEntry.COLUMN_COORD_LAT,
+            CouponsContract.LocationEntry.COLUMN_COORD_LONG,
+            CouponsContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100,
+            CouponsContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100,
+            CouponsContract.CouponEntry.COLUMN_COUPON_REMOTE_ID
 
     };
 
@@ -186,7 +186,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
                 if (cursor != null) {
                     //String locationSetting = Utility.getPreferredLocation(getActivity());
-                    //((Callback) getActivity()).onItemSelected(WeatherContract.CouponEntry.buildCouponUri(cursor.getLong(COL_COUPON_ID)));
+                    //((Callback) getActivity()).onItemSelected(CouponsContract.CouponEntry.buildCouponUri(cursor.getLong(COL_COUPON_ID)));
                     String remote_id = cursor.getString(COL_REMOTE_ID);
                     Uri uriUrl = Uri.parse("http://www.grocerycouponnetwork.com/coupons/?").buildUpon().appendQueryParameter("cid", remote_id).build();
                     //uriUrl.
@@ -276,10 +276,10 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
 
         /*
         // Sort order:  Ascending, by date.
-        String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
+        String sortOrder = CouponsContract.WeatherEntry.COLUMN_DATE + " ASC";
 
         String locationSetting = Utility.getPreferredLocation(getActivity());
-        Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(
+        Uri weatherForLocationUri = CouponsContract.WeatherEntry.buildWeatherLocationWithStartDate(
                 locationSetting, System.currentTimeMillis());
 
         return new CursorLoader(getActivity(),
@@ -291,15 +291,15 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
         */
 
         String locationSetting = Utility.getPreferredLocation(getActivity());
-        Uri couponForLocationUri = WeatherContract.CouponEntry.buildCouponLocation(locationSetting);
+        Uri couponForLocationUri = CouponsContract.CouponEntry.buildCouponLocation(locationSetting);
 
         return new CursorLoader(getActivity(),
                 couponForLocationUri,
                 COUPONS_COLUMNS,
                 null,
                 null,
-                WeatherContract.CouponEntry.COLUMN_COUPON_SLOT_INFO);
-        //WeatherContract.CouponEntry.COLUMN_DATE_CREATED + " DESC");
+                CouponsContract.CouponEntry.COLUMN_COUPON_SLOT_INFO);
+        //CouponsContract.CouponEntry.COLUMN_DATE_CREATED + " DESC");
 
     }
 
@@ -313,10 +313,14 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                 long coupon_id = extras.getLong("coupon_id");
                 Log.d(LOG_TAG,"Intent! coupon_id: "+coupon_id);
                 if (null != mCouponsAdapter) {
+                    Log.d(LOG_TAG,"Intent! mCouponsAdapter OK");
                     Cursor c = mCouponsAdapter.getCursor();
                     if (null != c) {
+                        Log.d(LOG_TAG,"Intent! Cursor c OK");
                         if (c.moveToFirst()) {
+                            Log.d(LOG_TAG,"Intent! Cursor c has data OK");
                             while (!c.isAfterLast()) {
+                                //Log.d(LOG_TAG,"Intent! is "+c.getLong(COL_COUPON_ID)+" == "+coupon_id+" ?");
                                 if (c.getLong(COL_COUPON_ID) == coupon_id) {
                                     mPosition = c.getPosition();
                                     break;
@@ -328,7 +332,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                 }
             }
         }
-
+        //Log.d(LOG_TAG,"Intent! mPosition: "+mPosition);
         if (mPosition != ListView.INVALID_POSITION) {
             // If we don't need to restart the loader, and there's a desired position to restore
             // to, do so now.

@@ -49,7 +49,7 @@
         </activity>
         <provider
             android:authorities="@string/content_authority"
-            android:name=".data.WeatherProvider"
+            android:name=".data.CouponsProvider"
             android:exported="false"
             android:syncable="true" />
 
