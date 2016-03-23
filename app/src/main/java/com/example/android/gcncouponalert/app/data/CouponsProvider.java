@@ -23,6 +23,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.util.Log;
 
 public class CouponsProvider extends ContentProvider {
     public static final String LOG_TAG = CouponsProvider.class.getSimpleName();
@@ -31,41 +32,13 @@ public class CouponsProvider extends ContentProvider {
     private static final UriMatcher sUriMatcher = buildUriMatcher();
     private CouponsDbHelper mOpenHelper;
 
-    static final int WEATHER = 100;
-    static final int WEATHER_WITH_LOCATION = 101;
-    static final int WEATHER_WITH_LOCATION_AND_DATE = 102;
     static final int LOCATION = 300;
     static final int COUPON = 400;
     static final int COUPON_WITH_LOCATION = 401;
     static final int COUPON_WITH_LOCATION_AND_DATE = 402;
     static final int COUPON_WITH_LOCATION_NOT_NOTIFIED = 403;
 
-    private static final SQLiteQueryBuilder sWeatherByLocationSettingQueryBuilder;
-
     private static final SQLiteQueryBuilder sCouponByLocationSettingQueryBuilder;
-
-    /*
-    private static final String sCouponSelection =
-            CouponsContract.CouponEntry.TABLE_NAME+
-                    "." + CouponsContract.CouponEntry.COLUMN_COUPON_CODE + " = ? ";
-    */
-
-    /*
-    private Cursor getCouponByCode(
-            Uri uri, String[] projection, String sortOrder) {
-        String coupon_code = CouponsContract.CouponEntry.getCouponCodeFromUri(uri);
-        //long date = CouponsContract.WeatherEntry.getCouponFromUri(uri);
-
-        return sWeatherByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
-                projection,
-                sCouponSelection,
-                new String[]{coupon_code},
-                null,
-                null,
-                null
-        );
-    }
-    */
 
     static{
         sCouponByLocationSettingQueryBuilder = new SQLiteQueryBuilder();
@@ -81,62 +54,16 @@ public class CouponsProvider extends ContentProvider {
                         "." + CouponsContract.LocationEntry._ID);
     }
 
-    static{
-        sWeatherByLocationSettingQueryBuilder = new SQLiteQueryBuilder();
-        
-        //This is an inner join which looks like
-        //weather INNER JOIN location ON weather.location_id = location._id
-        sWeatherByLocationSettingQueryBuilder.setTables(
-                CouponsContract.WeatherEntry.TABLE_NAME + " INNER JOIN " +
-                        CouponsContract.LocationEntry.TABLE_NAME +
-                        " ON " + CouponsContract.WeatherEntry.TABLE_NAME +
-                        "." + CouponsContract.WeatherEntry.COLUMN_LOC_KEY +
-                        " = " + CouponsContract.LocationEntry.TABLE_NAME +
-                        "." + CouponsContract.LocationEntry._ID);
-    }
-
     //location.location_setting = ?
     private static final String sLocationSettingSelection =
             CouponsContract.LocationEntry.TABLE_NAME+
                     "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? ";
-
-    //location.location_setting = ? AND date >= ?
-    private static final String sLocationSettingWithStartDateSelection =
-            CouponsContract.LocationEntry.TABLE_NAME+
-                    "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
-                    CouponsContract.WeatherEntry.COLUMN_DATE + " >= ? ";
-
-    //location.location_setting = ? AND date = ?
-    private static final String sLocationSettingAndDaySelection =
-            CouponsContract.LocationEntry.TABLE_NAME +
-                    "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
-                    CouponsContract.WeatherEntry.COLUMN_DATE + " = ? ";
 
     private static final String sLocationSettingNotNotifiedSelection =
             CouponsContract.LocationEntry.TABLE_NAME +
                     "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
                     CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry.COLUMN_NOTIFIED + " = 0 ";
 
-
-    /*
-    private Cursor getCouponByLocationSettingAndDate(
-            Uri uri, String[] projection, String sortOrder) {
-        String locationSetting = CouponsContract.WeatherEntry.getLocationSettingFromUri(uri);
-        long date = CouponsContract.CouponEntry.getDateFromUri(uri);
-
-        String selection = sLocationSettingAndDaySelection;
-        String[] selectionArgs = new String[]{locationSetting, Long.toString(date)};
-
-        return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
-                projection,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                sortOrder
-        );
-    }
-    */
 
     private Cursor getCouponByLocationSettingNotNotified(Uri uri, String[] projection, String sortOrder) {
         String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
@@ -178,45 +105,8 @@ public class CouponsProvider extends ContentProvider {
         );
     }
 
-    private Cursor getWeatherByLocationSetting(Uri uri, String[] projection, String sortOrder) {
-        String locationSetting = CouponsContract.WeatherEntry.getLocationSettingFromUri(uri);
-        long startDate = CouponsContract.WeatherEntry.getStartDateFromUri(uri);
 
-        String[] selectionArgs;
-        String selection;
 
-        if (startDate == 0) {
-            selection = sLocationSettingSelection;
-            selectionArgs = new String[]{locationSetting};
-        } else {
-            selectionArgs = new String[]{locationSetting, Long.toString(startDate)};
-            selection = sLocationSettingWithStartDateSelection;
-        }
-
-        return sWeatherByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
-                projection,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                sortOrder
-        );
-    }
-
-    private Cursor getWeatherByLocationSettingAndDate(
-            Uri uri, String[] projection, String sortOrder) {
-        String locationSetting = CouponsContract.WeatherEntry.getLocationSettingFromUri(uri);
-        long date = CouponsContract.WeatherEntry.getDateFromUri(uri);
-
-        return sWeatherByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
-                projection,
-                sLocationSettingAndDaySelection,
-                new String[]{locationSetting, Long.toString(date)},
-                null,
-                null,
-                sortOrder
-        );
-    }
 
     /*
         Students: Here is where you need to create the UriMatcher. This UriMatcher will
@@ -235,9 +125,7 @@ public class CouponsProvider extends ContentProvider {
         final String authority = CouponsContract.CONTENT_AUTHORITY;
 
         // For each type of URI you want to add, create a corresponding code.
-        matcher.addURI(authority, CouponsContract.PATH_WEATHER, WEATHER); // note to udacity: this does not really work.
-        matcher.addURI(authority, CouponsContract.PATH_WEATHER + "/*", WEATHER_WITH_LOCATION);
-        matcher.addURI(authority, CouponsContract.PATH_WEATHER + "/*/#", WEATHER_WITH_LOCATION_AND_DATE);
+
 
         matcher.addURI(authority, CouponsContract.PATH_LOCATION, LOCATION);
 
@@ -271,12 +159,6 @@ public class CouponsProvider extends ContentProvider {
 
         switch (match) {
             // Student: Uncomment and fill out these two cases
-            case WEATHER_WITH_LOCATION_AND_DATE:
-                return CouponsContract.WeatherEntry.CONTENT_ITEM_TYPE;
-            case WEATHER_WITH_LOCATION:
-                return CouponsContract.WeatherEntry.CONTENT_TYPE;
-            case WEATHER:
-                return CouponsContract.WeatherEntry.CONTENT_TYPE;
             case LOCATION:
                 return CouponsContract.LocationEntry.CONTENT_TYPE;
             case COUPON:
@@ -299,30 +181,6 @@ public class CouponsProvider extends ContentProvider {
         // and query the database accordingly.
         Cursor retCursor;
         switch (sUriMatcher.match(uri)) {
-            // "weather/*/*"
-            case WEATHER_WITH_LOCATION_AND_DATE:
-            {
-                retCursor = getWeatherByLocationSettingAndDate(uri, projection, sortOrder);
-                break;
-            }
-            // "weather/*"
-            case WEATHER_WITH_LOCATION: {
-                retCursor = getWeatherByLocationSetting(uri, projection, sortOrder);
-                break;
-            }
-            // "weather"
-            case WEATHER: {
-                retCursor = mOpenHelper.getReadableDatabase().query(
-                        CouponsContract.WeatherEntry.TABLE_NAME,
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null,
-                        null,
-                        sortOrder
-                );
-                break;
-            }
             // "location"
             case LOCATION: {
                 retCursor = mOpenHelper.getReadableDatabase().query(
@@ -388,15 +246,6 @@ public class CouponsProvider extends ContentProvider {
         Uri returnUri;
 
         switch (match) {
-            case WEATHER: {
-                normalizeDate(values);
-                long _id = db.insert(CouponsContract.WeatherEntry.TABLE_NAME, null, values);
-                if ( _id > 0 )
-                    returnUri = CouponsContract.WeatherEntry.buildWeatherUri(_id);
-                else
-                    throw new android.database.SQLException("Failed to insert row into " + uri);
-                break;
-            }
             case LOCATION: {
                 long _id = db.insert(CouponsContract.LocationEntry.TABLE_NAME, null, values);
                 if ( _id > 0 )
@@ -428,10 +277,6 @@ public class CouponsProvider extends ContentProvider {
         // this makes delete all rows return the number of rows deleted
         if ( null == selection ) selection = "1";
         switch (match) {
-            case WEATHER:
-                rowsDeleted = db.delete(
-                        CouponsContract.WeatherEntry.TABLE_NAME, selection, selectionArgs);
-                break;
             case LOCATION:
                 rowsDeleted = db.delete(
                         CouponsContract.LocationEntry.TABLE_NAME, selection, selectionArgs);
@@ -450,6 +295,7 @@ public class CouponsProvider extends ContentProvider {
         return rowsDeleted;
     }
 
+    /*
     private void normalizeDate(ContentValues values) {
         // normalize the date value
         if (values.containsKey(CouponsContract.WeatherEntry.COLUMN_DATE)) {
@@ -457,6 +303,7 @@ public class CouponsProvider extends ContentProvider {
             values.put(CouponsContract.WeatherEntry.COLUMN_DATE, CouponsContract.normalizeDate(dateValue));
         }
     }
+    */
 
     @Override
     public int update(
@@ -466,11 +313,6 @@ public class CouponsProvider extends ContentProvider {
         int rowsUpdated;
 
         switch (match) {
-            case WEATHER:
-                normalizeDate(values);
-                rowsUpdated = db.update(CouponsContract.WeatherEntry.TABLE_NAME, values, selection,
-                        selectionArgs);
-                break;
             case LOCATION:
                 rowsUpdated = db.update(CouponsContract.LocationEntry.TABLE_NAME, values, selection,
                         selectionArgs);
@@ -493,41 +335,34 @@ public class CouponsProvider extends ContentProvider {
         final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         final int match = sUriMatcher.match(uri);
         switch (match) {
-            case WEATHER: {
-                db.beginTransaction();
-                int returnCount = 0;
-                try {
-                    for (ContentValues value : values) {
-                        normalizeDate(value);
-                        long _id = db.insert(CouponsContract.WeatherEntry.TABLE_NAME, null, value);
-                        if (_id != -1) {
-                            returnCount++;
-                        }
-                    }
-                    db.setTransactionSuccessful();
-                } finally {
-                    db.endTransaction();
-                }
-                //getContext().getContentResolver().notifyChange(uri, null);
-                return returnCount;
-            }
             case COUPON: {
                 db.beginTransaction();
                 int returnCount = 0;
+                int rowsUpdated = 0;
                 try {
                     for (ContentValues value : values) {
                         //normalizeDate(value);
                         long _id = db.insert(CouponsContract.CouponEntry.TABLE_NAME, null, value);
                         if (_id != -1) {
                             returnCount++;
+                        } else {
+                            // update the last_active_date and location
+                            ContentValues update_stuff = new ContentValues();
+                            update_stuff.put(CouponsContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE, (String) value.get(CouponsContract.CouponEntry.COLUMN_COUPON_CODE));
+                            update_stuff.put(CouponsContract.CouponEntry.COLUMN_LOC_KEY, (Long) value.get(CouponsContract.CouponEntry.COLUMN_LOC_KEY));
+                            rowsUpdated += db.update(CouponsContract.CouponEntry.TABLE_NAME, update_stuff, CouponsContract.CouponEntry.COLUMN_COUPON_CODE+" = "+value.get(CouponsContract.CouponEntry.COLUMN_COUPON_CODE), null);
+                            //getContext().getContentResolver().update(CouponsContract.CouponEntry.CONTENT_URI, notified_flag, CouponsContract.CouponEntry.COLUMN_NOTIFIED + " = 0", null);
                         }
                     }
                     db.setTransactionSuccessful();
                 } finally {
                     db.endTransaction();
                 }
-                getContext().getContentResolver().notifyChange(uri, null);
-                return returnCount;
+                if (returnCount > 0) {
+                    //getContext().getContentResolver().notifyChange(uri, null, false);
+                }
+                Log.d(LOG_TAG, "returnCount: " + returnCount + "; rowsUpdated: " + rowsUpdated);
+                return (returnCount+rowsUpdated);
             }
             default:
                 return super.bulkInsert(uri, values);

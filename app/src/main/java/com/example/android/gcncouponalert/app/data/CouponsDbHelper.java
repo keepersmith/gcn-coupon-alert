@@ -20,7 +20,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.example.android.gcncouponalert.app.data.CouponsContract.LocationEntry;
-import com.example.android.gcncouponalert.app.data.CouponsContract.WeatherEntry;
 import com.example.android.gcncouponalert.app.data.CouponsContract.CouponEntry;
 
 /**
@@ -29,7 +28,7 @@ import com.example.android.gcncouponalert.app.data.CouponsContract.CouponEntry;
 public class CouponsDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 8;
+    private static final int DATABASE_VERSION = 9;
 
     static final String DATABASE_NAME = "gcn_coupon.db";
 
@@ -52,7 +51,7 @@ public class CouponsDbHelper extends SQLiteOpenHelper {
         final String SQL_CREATE_COUPON_TABLE = "CREATE TABLE " + CouponEntry.TABLE_NAME + " (" +
                 CouponEntry._ID + " INTEGER PRIMARY KEY," +
                 CouponEntry.COLUMN_LOC_KEY + " INTEGER NOT NULL, " +
-                CouponEntry.COLUMN_COUPON_CODE + " TEXT UNIQUE ON CONFLICT REPLACE NOT NULL, " +
+                CouponEntry.COLUMN_COUPON_CODE + " TEXT UNIQUE ON CONFLICT IGNORE NOT NULL, " +
                 CouponEntry.COLUMN_COUPON_NAME + " TEXT NOT NULL, " +
                 CouponEntry.COLUMN_LAST_ACTIVE_DATE + " DATETIME NOT NULL, " +
                 CouponEntry.COLUMN_DATE_CREATED + " DATETIME NOT NULL, " +
@@ -68,40 +67,10 @@ public class CouponsDbHelper extends SQLiteOpenHelper {
                 LocationEntry.TABLE_NAME + " (" + LocationEntry._ID + ") " +
                 " );";
 
-        final String SQL_CREATE_WEATHER_TABLE = "CREATE TABLE " + WeatherEntry.TABLE_NAME + " (" +
-                // Why AutoIncrement here, and not above?
-                // Unique keys will be auto-generated in either case.  But for weather
-                // forecasting, it's reasonable to assume the user will want information
-                // for a certain date and all dates *following*, so the forecast data
-                // should be sorted accordingly.
-                WeatherEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
 
-                // the ID of the location entry associated with this weather data
-                WeatherEntry.COLUMN_LOC_KEY + " INTEGER NOT NULL, " +
-                WeatherEntry.COLUMN_DATE + " INTEGER NOT NULL, " +
-                WeatherEntry.COLUMN_SHORT_DESC + " TEXT NOT NULL, " +
-                WeatherEntry.COLUMN_WEATHER_ID + " INTEGER NOT NULL," +
-
-                WeatherEntry.COLUMN_MIN_TEMP + " REAL NOT NULL, " +
-                WeatherEntry.COLUMN_MAX_TEMP + " REAL NOT NULL, " +
-
-                WeatherEntry.COLUMN_HUMIDITY + " REAL NOT NULL, " +
-                WeatherEntry.COLUMN_PRESSURE + " REAL NOT NULL, " +
-                WeatherEntry.COLUMN_WIND_SPEED + " REAL NOT NULL, " +
-                WeatherEntry.COLUMN_DEGREES + " REAL NOT NULL, " +
-
-                // Set up the location column as a foreign key to location table.
-                " FOREIGN KEY (" + WeatherEntry.COLUMN_LOC_KEY + ") REFERENCES " +
-                LocationEntry.TABLE_NAME + " (" + LocationEntry._ID + "), " +
-
-                // To assure the application have just one weather entry per day
-                // per location, it's created a UNIQUE constraint with REPLACE strategy
-                " UNIQUE (" + WeatherEntry.COLUMN_DATE + ", " +
-                WeatherEntry.COLUMN_LOC_KEY + ") ON CONFLICT REPLACE);";
 
         sqLiteDatabase.execSQL(SQL_CREATE_LOCATION_TABLE);
         sqLiteDatabase.execSQL(SQL_CREATE_COUPON_TABLE);
-        sqLiteDatabase.execSQL(SQL_CREATE_WEATHER_TABLE);
     }
 
     @Override
@@ -114,7 +83,6 @@ public class CouponsDbHelper extends SQLiteOpenHelper {
         // should be your top priority before modifying this method.
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + LocationEntry.TABLE_NAME);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + CouponEntry.TABLE_NAME);
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + WeatherEntry.TABLE_NAME);
         onCreate(sqLiteDatabase);
     }
 }

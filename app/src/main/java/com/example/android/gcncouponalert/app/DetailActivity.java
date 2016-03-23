@@ -40,7 +40,7 @@ public class DetailActivity extends ActionBarActivity {
             fragment.setArguments(arguments);
 
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.weather_detail_container, fragment)
+                    .add(R.id.coupon_detail_container, fragment)
                     .commit();
         }
     }

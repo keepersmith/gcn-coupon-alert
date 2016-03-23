@@ -2,6 +2,7 @@ package com.example.android.gcncouponalert.app.sync;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.AbstractThreadedSyncAdapter;
@@ -59,7 +60,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
     //private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
     private static final long NOTIFICATION_COOLDOWN_MILLIS = 1000 * 60;
     private static final long ONE_MINUTE_IN_MILLIS = 1000 * 60;
-    private static final int WEATHER_NOTIFICATION_ID = 3004;
+    //private static final int WEATHER_NOTIFICATION_ID = 3004;
     private static final int COUPON_NOTIFICATION_ID = 3005;
 
     private static final String[] NOTIFY_NEW_COUPONS = new String[] {
@@ -68,19 +69,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             CouponsContract.CouponEntry.COLUMN_COUPON_NAME
     };
 
-    private static final String[] NOTIFY_WEATHER_PROJECTION = new String[] {
-            CouponsContract.WeatherEntry.COLUMN_WEATHER_ID,
-            CouponsContract.WeatherEntry.COLUMN_MAX_TEMP,
-            CouponsContract.WeatherEntry.COLUMN_MIN_TEMP,
-            CouponsContract.WeatherEntry.COLUMN_SHORT_DESC
-    };
-
     // these indices must match the projection
-    private static final int INDEX_WEATHER_ID = 0;
-    private static final int INDEX_MAX_TEMP = 1;
-    private static final int INDEX_MIN_TEMP = 2;
-    private static final int INDEX_SHORT_DESC = 3;
-
     private static final int INDEX_COUPON_ID = 0;
     private static final int INDEX_COUPON_CODE = 1;
     private static final int INDEX_COUPON_NAME = 2;
@@ -280,17 +269,19 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             if ( cVVector.size() > 0 ) {
                 ContentValues[] cvArray = new ContentValues[cVVector.size()];
                 cVVector.toArray(cvArray);
-                getContext().getContentResolver().bulkInsert(CouponsContract.CouponEntry.CONTENT_URI, cvArray);
+                inserted = getContext().getContentResolver().bulkInsert(CouponsContract.CouponEntry.CONTENT_URI, cvArray);
 
                 // delete old data so we don't build up an endless history
                 //getContext().getContentResolver().delete(CouponsContract.CouponEntry.CONTENT_URI,CouponsContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE + " <= ?",new String[]{"NOW()"});
 
                 //notifyCoupon();
-                found_data = true;
+                if (inserted > 0) {
+                    found_data = true;
+                }
 
             }
 
-            Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " Inserted");
+            Log.d(LOG_TAG, "getCouponDataFromJson; " + cVVector.size() + " coupons found; "+inserted+" new coupons inserted.");
 
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
@@ -352,6 +343,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                                     .setSmallIcon(iconId)
                                     .setLargeIcon(largeIcon)
                                     .setContentTitle(title)
+                                    .setAutoCancel(true)
                                     .setContentText(contentText);
 
                     // Make something interesting happen when the user clicks on the notification.
@@ -375,7 +367,8 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                     NotificationManager mNotificationManager =
                             (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
                     // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
-                    mNotificationManager.notify(COUPON_NOTIFICATION_ID, mBuilder.build());
+                    Notification noti = mBuilder.build();
+                    mNotificationManager.notify(COUPON_NOTIFICATION_ID, noti);
 
                     //refreshing last sync
                     SharedPreferences.Editor editor = prefs.edit();
@@ -609,8 +602,6 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
          */
         ContentResolver.setSyncAutomatically(newAccount, context.getString(R.string.content_authority), true);
 
-        // we are going to syncImmediately...so cancel the sync setup by addAccountExplicitly
-        //ContentResolver.cancelSync(newAccount, context.getString(R.string.content_authority));
         /*
          * Finally, let's do a sync to get things started
          */

@@ -54,23 +54,6 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
     private static final int COUPONS_LOADER = 0;
     // For the forecast view we're showing only a small subset of the stored data.
     // Specify the columns we need.
-    private static final String[] FORECAST_COLUMNS = {
-            // In this case the id needs to be fully qualified with a table name, since
-            // the content provider joins the location & weather tables in the background
-            // (both have an _id column)
-            // On the one hand, that's annoying.  On the other, you can search the weather table
-            // using the location set by the user, which is only in the Location table.
-            // So the convenience is worth it.
-            CouponsContract.WeatherEntry.TABLE_NAME + "." + CouponsContract.WeatherEntry._ID,
-            CouponsContract.WeatherEntry.COLUMN_DATE,
-            CouponsContract.WeatherEntry.COLUMN_SHORT_DESC,
-            CouponsContract.WeatherEntry.COLUMN_MAX_TEMP,
-            CouponsContract.WeatherEntry.COLUMN_MIN_TEMP,
-            CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING,
-            CouponsContract.WeatherEntry.COLUMN_WEATHER_ID,
-            CouponsContract.LocationEntry.COLUMN_COORD_LAT,
-            CouponsContract.LocationEntry.COLUMN_COORD_LONG
-    };
 
     private static final String[] COUPONS_COLUMNS = {
             // In this case the id needs to be fully qualified with a table name, since
@@ -149,15 +132,19 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-//        if (id == R.id.action_refresh) {
-//            updateWeather();
-//            return true;
-//        }
+        //int id = item.getItemId();
+        /*
+        if (id == R.id.action_refresh) {
+            updateCoupons();
+            return true;
+        }
+        */
+        /*
         if (id == R.id.action_map) {
             openPreferredLocationInMap();
             return true;
         }
+        */
 
         return super.onOptionsItemSelected(item);
     }
@@ -222,14 +209,15 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
 
     // since we read the location when we create the loader, all we need to do is restart things
     void onLocationChanged( ) {
-        updateWeather();
+        updateCoupons();
         getLoaderManager().restartLoader(COUPONS_LOADER, null, this);
     }
 
-    private void updateWeather() {
+    private void updateCoupons() {
         GCNCouponAlertSyncAdapter.syncImmediately(getActivity());
     }
 
+    /*
     private void openPreferredLocationInMap() {
         // Using the URI scheme for showing a location found on a map.  This super-handy
         // intent can is detailed in the "Common Intents" page of Android's developer site:
@@ -254,6 +242,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
 
         }
     }
+    */
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -313,12 +302,12 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                 long coupon_id = extras.getLong("coupon_id");
                 Log.d(LOG_TAG,"Intent! coupon_id: "+coupon_id);
                 if (null != mCouponsAdapter) {
-                    Log.d(LOG_TAG,"Intent! mCouponsAdapter OK");
+                    //Log.d(LOG_TAG,"Intent! mCouponsAdapter OK");
                     Cursor c = mCouponsAdapter.getCursor();
                     if (null != c) {
-                        Log.d(LOG_TAG,"Intent! Cursor c OK");
+                        //Log.d(LOG_TAG,"Intent! Cursor c OK");
                         if (c.moveToFirst()) {
-                            Log.d(LOG_TAG,"Intent! Cursor c has data OK");
+                            //Log.d(LOG_TAG,"Intent! Cursor c has data OK");
                             while (!c.isAfterLast()) {
                                 //Log.d(LOG_TAG,"Intent! is "+c.getLong(COL_COUPON_ID)+" == "+coupon_id+" ?");
                                 if (c.getLong(COL_COUPON_ID) == coupon_id) {
@@ -330,7 +319,9 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                         }
                     }
                 }
+                getActivity().getIntent().removeExtra("coupon_id");
             }
+
         }
         //Log.d(LOG_TAG,"Intent! mPosition: "+mPosition);
         if (mPosition != ListView.INVALID_POSITION) {
