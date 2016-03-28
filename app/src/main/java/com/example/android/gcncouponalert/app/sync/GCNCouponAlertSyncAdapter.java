@@ -45,6 +45,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 import java.util.Vector;
 
 public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
@@ -101,30 +105,56 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             // Construct the URL for the OpenWeatherMap query
             // Possible parameters are avaiable at OWM's forecast API page, at
             // http://openweathermap.org/API#forecast
-            final String FORECAST_BASE_URL =
-                    "http://tools.grocerycouponnetwork.com/api1/coupon/?";
-            final String AUTH_KEY_PARAM = "auth_key";
-            final String LOCATION_PARAM = "zip_code";
+            //final String FORECAST_BASE_URL = "http://tools.grocerycouponnetwork.com/api1/coupon/?";
+            final String FORECAST_BASE_URL = "http://www.grocerycouponnetwork.com/api/coupons/get_active_coupons/?";
+            //final String AUTH_KEY_PARAM = "auth_key";
+            final String LOCATION_PARAM = "zip";
+
+            long dateInMillis = System.currentTimeMillis();
+            SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            shortenedDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            String xAuthDate = shortenedDateFormat.format(dateInMillis);
+
+            // $api_key = 'b84ed8cb132cba185d6214af7fcd31f3c115b0e40046c512d4c2872c7edffe7cf7719193fdf8edffad62284c503a5f1beaca15916c84316e5e9c2b0a6c30f820';
+            String api_key = "b84ed8cb132cba185d6214af7fcd31f3c115b0e40046c512d4c2872c7edffe7cf7719193fdf8edffad62284c503a5f1beaca15916c84316e5e9c2b0a6c30f820";
+            // $authentication_token = hash('sha512',"gcn-android:$api_key@$authentication_date");
+            String xAuthorization_token = "gcn-android:"+api_key+"@"+xAuthDate;
+
+            String xAuthorization_string = "";
+            try {
+                MessageDigest md = MessageDigest.getInstance("SHA-512");
+                //md.update(salt.getBytes("UTF-8"));
+                byte[] bytes = md.digest(xAuthorization_token.getBytes("UTF-8"));
+                StringBuilder sb = new StringBuilder();
+                for(int i=0; i< bytes.length ;i++) {
+                    sb.append(String.format("%02x", bytes[i]));
+                }
+                xAuthorization_string = "gcn-android:"+sb.toString();
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
 
             // do this twice - once for national coupons, once for local coupons
-            Uri[] builtUri = new Uri[2];
+            Uri[] builtUri = new Uri[1];
             builtUri[0] = Uri.parse(FORECAST_BASE_URL).buildUpon()
                     .appendQueryParameter(LOCATION_PARAM, locationQuery)
-                    .appendQueryParameter(AUTH_KEY_PARAM, BuildConfig.GCN_COUPON_API_KEY)
+                    //.appendQueryParameter(AUTH_KEY_PARAM, BuildConfig.GCN_COUPON_API_KEY)
                     .build();
-            builtUri[1] = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                    .appendQueryParameter(AUTH_KEY_PARAM, BuildConfig.GCN_COUPON_API_KEY)
-                    .build();
+            //builtUri[1] = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                    //.appendQueryParameter(AUTH_KEY_PARAM, BuildConfig.GCN_COUPON_API_KEY)
+                    //.build();
 
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 1; i++) {
                 URL url = new URL(builtUri[i].toString());
-                Log.d(LOG_TAG,"Calling API URL: "+builtUri[i].toString());
+                Log.d(LOG_TAG, "Calling API URL: " + builtUri[i].toString()+"; "+xAuthDate+"; "+xAuthorization_string);
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("GET");
+                urlConnection.setRequestProperty("X-Auth-Date", xAuthDate);
+                urlConnection.setRequestProperty("X-Authorization",xAuthorization_string);
                 urlConnection.connect();
-
+                Log.d(LOG_TAG, " Got back: " +urlConnection.getResponseCode()+" "+urlConnection.getResponseMessage());
                 // Read the input stream into a String
                 InputStream inputStream = urlConnection.getInputStream();
                 StringBuffer buffer = new StringBuffer();
@@ -194,11 +224,12 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
         // These are the names of the JSON objects that need to be extracted.
 
-        final String OWM_STATUS = "status";
-        final String OWM_ERROR_MESSAGE = "error_message";
-        final String OWM_DATA = "data";
+        //final String OWM_STATUS = "status";
+        //final String OWM_ERROR_MESSAGE = "error_message";
+        //final String OWM_DATA = "data";
+        final String OWM_COUPONS = "coupons";
 
-        final String OWM_RESULTS = "results";
+        //final String OWM_RESULTS = "results";
 
         final String OWM_COUPON_CODE = "coupon_code";
         final String OWM_COUPON_NAME = "coupon_name";
@@ -215,8 +246,8 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
         try {
             JSONObject couponJson = new JSONObject(forecastJsonStr);
-            JSONObject couponData = couponJson.getJSONObject(OWM_DATA);
-            JSONArray couponArray = couponData.getJSONArray(OWM_RESULTS);
+            JSONArray couponArray = couponJson.getJSONArray(OWM_COUPONS);
+            //JSONArray couponArray = couponData.getJSONArray(OWM_RESULTS);
 
             long locationId = addLocation(locationSetting);
 
