@@ -91,6 +91,24 @@ public class CouponsProvider extends ContentProvider {
         );
     }
 
+    private Cursor getCouponByID(Uri uri, String[] projection, String sortOrder) {
+        //String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
+
+        String selection = CouponsContract.CouponEntry.TABLE_NAME+
+                "."+CouponsContract.CouponEntry._ID + " = ? ";
+
+        String[] selectionArgs = new String[]{uri.getPathSegments().get(2)};
+
+        return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
     private Cursor getCouponByLocationSetting(Uri uri, String[] projection, String sortOrder) {
         String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
 
@@ -132,9 +150,9 @@ public class CouponsProvider extends ContentProvider {
         matcher.addURI(authority, CouponsContract.PATH_LOCATION, LOCATION);
 
         matcher.addURI(authority, CouponsContract.PATH_COUPON, COUPON); // note to udacity: this does not really work like you think it does.
-        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/*", COUPON_WITH_LOCATION);
-        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/_*", COUPON_WITH_ID);
-        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/*/not-notified", COUPON_WITH_LOCATION_NOT_NOTIFIED);
+        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#", COUPON_WITH_LOCATION);
+        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/id/#", COUPON_WITH_ID);
+        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/not-notified", COUPON_WITH_LOCATION_NOT_NOTIFIED);
         return matcher;
     }
 
@@ -207,10 +225,12 @@ public class CouponsProvider extends ContentProvider {
                         null,
                         sortOrder
                 );
+                //Log.d(LOG_TAG,"COUPON: "+selection);
                 break;
             }
 
             case COUPON_WITH_ID: {
+                /*
                 retCursor = mOpenHelper.getReadableDatabase().query(
                         CouponsContract.CouponEntry.TABLE_NAME,
                         projection,
@@ -220,10 +240,14 @@ public class CouponsProvider extends ContentProvider {
                         null,
                         sortOrder
                 );
+                */
+                //Log.d(LOG_TAG,"COUPON_WITH_ID: "+selection);
+                retCursor = getCouponByID(uri, projection, sortOrder);
                 break;
             }
 
             case COUPON_WITH_LOCATION: {
+                //Log.d(LOG_TAG,"COUPON_WITH_LOCATION: "+selection);
                 retCursor = getCouponByLocationSetting(uri, projection, sortOrder);
                 break;
 

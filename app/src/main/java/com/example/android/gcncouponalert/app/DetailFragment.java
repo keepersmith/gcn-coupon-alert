@@ -25,6 +25,7 @@ import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.ShareActionProvider;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -59,7 +60,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             CouponEntry.COLUMN_COUPON_NAME,
             // This works because the CouponsProvider returns location data joined with
             // weather data, even though they're stored in two different tables.
-            CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING,
+            //CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING,
             CouponEntry.COLUMN_SUMMARY_TEXT,
             CouponEntry.COLUMN_BRAND_NAME,
             CouponEntry.COLUMN_ADDITIONAL_TEXT,
@@ -73,16 +74,20 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     public static final int COL_COUPON_ID = 0;
     public static final int COL_COUPON_CODE = 1;
     public static final int COL_COUPON_NAME = 2;
-    public static final int COL_LOCATION_SETTING = 3;
-    public static final int COL_SUMMARY_TEXT = 4;
-    public static final int COL_BRAND_NAME = 5;
-    public static final int COL_ADDITIONAL_TEXT = 6;
-    public static final int COL_IMAGE_URL_80x100 = 7;
-    public static final int COL_IMAGE_EXT_80x100 = 8;
-    public static final int COL_REMOTE_ID = 9;
+    //public static final int COL_LOCATION_SETTING = 3;
+    public static final int COL_SUMMARY_TEXT = 3;
+    public static final int COL_BRAND_NAME = 4;
+    public static final int COL_ADDITIONAL_TEXT = 5;
+    public static final int COL_IMAGE_URL_80x100 = 6;
+    public static final int COL_IMAGE_EXT_80x100 = 7;
+    public static final int COL_REMOTE_ID = 8;
 
 
     private ImageView mIconView;
+    private TextView mSummaryView;
+    private TextView mBrandNameView;
+    private TextView mAdditionalView;
+    /*
     private TextView mFriendlyDateView;
     private TextView mDateView;
     private TextView mDescriptionView;
@@ -91,6 +96,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     private TextView mHumidityView;
     private TextView mWindView;
     private TextView mPressureView;
+    */
 
     public DetailFragment() {
         setHasOptionsMenu(true);
@@ -107,6 +113,10 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         mIconView = (ImageView) rootView.findViewById(R.id.detail_icon);
+        mSummaryView = (TextView) rootView.findViewById(R.id.detail_summary_text);
+        mBrandNameView = (TextView) rootView.findViewById(R.id.detail_brand_name);
+        mAdditionalView = (TextView) rootView.findViewById(R.id.detail_additional_text);
+        /*
         mDateView = (TextView) rootView.findViewById(R.id.detail_date_textview);
         mFriendlyDateView = (TextView) rootView.findViewById(R.id.detail_day_textview);
         mDescriptionView = (TextView) rootView.findViewById(R.id.detail_forecast_textview);
@@ -115,6 +125,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         mHumidityView = (TextView) rootView.findViewById(R.id.detail_humidity_textview);
         mWindView = (TextView) rootView.findViewById(R.id.detail_wind_textview);
         mPressureView = (TextView) rootView.findViewById(R.id.detail_pressure_textview);
+        */
         return rootView;
     }
 
@@ -149,6 +160,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         super.onActivityCreated(savedInstanceState);
     }
 
+        /*
     void onLocationChanged( String newLocation ) {
         // replace the uri, since the location has changed
         Uri uri = mUri;
@@ -158,6 +170,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
         }
     }
+    */
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -178,12 +191,15 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        Log.d(LOG_TAG,"any data? "+mUri);
         if (data != null && data.moveToFirst()) {
+            Log.d(LOG_TAG,"with data");
             // Read weather condition ID from cursor
             //int weatherId = data.getInt(COL_WEATHER_CONDITION_ID);
 
             // Use weather art image
             //mIconView.setImageResource(Utility.getArtResourceForWeatherCondition(weatherId));
+            mIconView.setImageBitmap(Utility.loadImageFromLocalStore(data.getString(CouponsFragment.COL_IMAGE_URL_80x100), data.getString(CouponsFragment.COL_IMAGE_EXT_80x100)));
 
             // Read date from cursor and update views for day of week and date
             //long date = data.getLong(COL_WEATHER_DATE);
@@ -193,14 +209,18 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             //mDateView.setText(dateText);
 
             // Read description from cursor and update view
-            String description = data.getString(COL_COUPON_NAME);
-            mDescriptionView.setText(description);
+            //String description = data.getString(COL_COUPON_NAME);
+            mSummaryView.setText(data.getString(COL_SUMMARY_TEXT));
+            mBrandNameView.setText(data.getString(COL_BRAND_NAME));
+            mAdditionalView.setText(data.getString(COL_ADDITIONAL_TEXT));
 
             // For accessibility, add a content description to the icon field
-            mIconView.setContentDescription(description);
+            mIconView.setContentDescription(data.getString(COL_COUPON_NAME));
+
+
 
             // Read high temperature from cursor and update view
-            boolean isMetric = Utility.isMetric(getActivity());
+            //boolean isMetric = Utility.isMetric(getActivity());
 
             //double high = data.getDouble(COL_WEATHER_MAX_TEMP);
             //String highString = Utility.formatTemperature(getActivity(), high);

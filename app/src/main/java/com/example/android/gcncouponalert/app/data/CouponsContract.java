@@ -126,7 +126,7 @@ public class CouponsContract {
 
         public static Uri buildCouponUri(long id) {
             //return ContentUris.withAppendedId(CONTENT_URI, id);
-            return CONTENT_URI.buildUpon().appendPath("_"+id).build();
+            return CONTENT_URI.buildUpon().appendPath("id").appendPath(Long.toString(id)).build();
         }
 
         public static Uri buildCouponLocation(String locationSetting) {
