@@ -199,7 +199,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
             // Use weather art image
             //mIconView.setImageResource(Utility.getArtResourceForWeatherCondition(weatherId));
-            mIconView.setImageBitmap(Utility.loadImageFromLocalStore(data.getString(CouponsFragment.COL_IMAGE_URL_80x100), data.getString(CouponsFragment.COL_IMAGE_EXT_80x100)));
+            mIconView.setImageBitmap(Utility.loadImageFromLocalStore(data.getString(DetailFragment.COL_IMAGE_URL_80x100), data.getString(DetailFragment.COL_IMAGE_EXT_80x100)));
 
             // Read date from cursor and update views for day of week and date
             //long date = data.getLong(COL_WEATHER_DATE);
