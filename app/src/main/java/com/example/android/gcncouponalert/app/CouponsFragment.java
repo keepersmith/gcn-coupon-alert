@@ -172,14 +172,15 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                 // if it cannot seek to that position.
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
                 if (cursor != null) {
-                    //String locationSetting = Utility.getPreferredLocation(getActivity());
-                    //((Callback) getActivity()).onItemSelected(CouponsContract.CouponEntry.buildCouponUri(cursor.getLong(COL_COUPON_ID)));
+                    ((Callback) getActivity()).onItemSelected(CouponsContract.CouponEntry.buildCouponUri(cursor.getLong(COL_COUPON_ID)));
+
+                    /*
                     String remote_id = cursor.getString(COL_REMOTE_ID);
                     Uri uriUrl = Uri.parse("http://www.grocerycouponnetwork.com/coupons/?").buildUpon().appendQueryParameter("cid", remote_id).build();
-                    //uriUrl.
                     Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
                     startActivity(launchBrowser);
                     Log.d(LOG_TAG,"Launched: " + uriUrl.toString());
+                    */
                 }
                 mPosition = position;
             }
@@ -328,7 +329,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
             // If we don't need to restart the loader, and there's a desired position to restore
             // to, do so now.
             int offset = 0;
-            mListView.smoothScrollToPositionFromTop(mPosition,offset,500);
+            mListView.smoothScrollToPositionFromTop(mPosition,offset,100);
         }
     }
 

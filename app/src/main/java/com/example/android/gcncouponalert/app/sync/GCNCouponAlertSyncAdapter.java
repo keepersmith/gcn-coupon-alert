@@ -241,6 +241,10 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         final String OWM_COUPON_SLOT_INFO = "slot_info";
         final String OWM_COUPON_CATEGORY_CODE = "category_code";
         final String OWM_COUPON_BRAND_CODE = "brand_code";
+        final String OWM_COUPON_EXPIRATION_DATE = "expiration_date";
+        final String OWM_COUPON_BRAND_NAME = "brand_name";
+        final String OWM_COUPON_ADDITIONAL_TEXT = "additional_text";
+        final String OWM_COUPON_SUMMARY_TEXT = "summary_text";
 
         boolean found_data = false;
 
@@ -266,6 +270,10 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 String slot_info = couponInfo.getString(OWM_COUPON_SLOT_INFO);
                 String category_code = couponInfo.getString(OWM_COUPON_CATEGORY_CODE);
                 String brand_code = couponInfo.getString(OWM_COUPON_BRAND_CODE);
+                String expiration_date = couponInfo.getString(OWM_COUPON_EXPIRATION_DATE);
+                String brand_name = couponInfo.getString(OWM_COUPON_BRAND_NAME);
+                String additional_text = couponInfo.getString(OWM_COUPON_ADDITIONAL_TEXT);
+                String summary_text = couponInfo.getString(OWM_COUPON_SUMMARY_TEXT);
 
                 ContentValues couponValues = new ContentValues();
 
@@ -279,6 +287,10 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_SLOT_INFO, slot_info);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_CATEGORY_CODE, category_code);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_BRAND_CODE, brand_code);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_EXPIRATION_DATE, expiration_date);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_BRAND_NAME, brand_name);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_ADDITIONAL_TEXT, additional_text);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_SUMMARY_TEXT, summary_text);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_LOC_KEY, locationId);
 
                 cVVector.add(couponValues);

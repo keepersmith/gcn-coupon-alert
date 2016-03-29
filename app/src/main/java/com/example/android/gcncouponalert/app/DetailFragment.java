@@ -59,7 +59,13 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             CouponEntry.COLUMN_COUPON_NAME,
             // This works because the CouponsProvider returns location data joined with
             // weather data, even though they're stored in two different tables.
-            CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING
+            CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING,
+            CouponEntry.COLUMN_SUMMARY_TEXT,
+            CouponEntry.COLUMN_BRAND_NAME,
+            CouponEntry.COLUMN_ADDITIONAL_TEXT,
+            CouponsContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100,
+            CouponsContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100,
+            CouponsContract.CouponEntry.COLUMN_COUPON_REMOTE_ID
     };
 
     // These indices are tied to DETAIL_COLUMNS.  If DETAIL_COLUMNS changes, these
@@ -68,6 +74,13 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     public static final int COL_COUPON_CODE = 1;
     public static final int COL_COUPON_NAME = 2;
     public static final int COL_LOCATION_SETTING = 3;
+    public static final int COL_SUMMARY_TEXT = 4;
+    public static final int COL_BRAND_NAME = 5;
+    public static final int COL_ADDITIONAL_TEXT = 6;
+    public static final int COL_IMAGE_URL_80x100 = 7;
+    public static final int COL_IMAGE_EXT_80x100 = 8;
+    public static final int COL_REMOTE_ID = 9;
+
 
     private ImageView mIconView;
     private TextView mFriendlyDateView;

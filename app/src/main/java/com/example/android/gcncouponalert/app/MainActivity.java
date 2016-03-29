@@ -147,7 +147,7 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
     @Override
     public void onItemSelected(Uri contentUri) {
         Log.d("onItemSelected()","Called with: "+contentUri.toString());
-        /*
+
         if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
@@ -159,29 +159,32 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
             fragment.setArguments(args);
 
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.weather_detail_container, fragment, DETAILFRAGMENT_TAG)
+                    .replace(R.id.coupon_detail_container, fragment, DETAILFRAGMENT_TAG)
                     .commit();
         } else {
-        */
+
+
+            /*
             Cursor cursor = getContentResolver().query(contentUri, new String[]{CouponsContract.CouponEntry.COLUMN_COUPON_REMOTE_ID}, null, null, null);
-            //SQLiteQueryBuilder temp_test = new SQLiteQueryBuilder();
-            //temp_test.buildQuery();
             if (cursor.moveToFirst()) {
+
                 String remote_id = cursor.getString(0);
                 Uri uriUrl = Uri.parse("http://www.grocerycouponnetwork.com/coupons/?").buildUpon().appendQueryParameter("cid", remote_id).build();
-                //uriUrl.
+
                 Intent launchBrowser = new Intent(Intent.ACTION_VIEW, uriUrl);
                 startActivity(launchBrowser);
                 Log.d("onItemSelected()", "Launched: " + uriUrl.toString());
             } else {
                 Log.d("onItemSelected()", "Failed to Launch");
             }
-        cursor.close();
-            /*
+            cursor.close();
+        */
+
+
             Intent intent = new Intent(this, DetailActivity.class)
                     .setData(contentUri);
             startActivity(intent);
-            */
-        //}
+
+        }
     }
 }

@@ -119,9 +119,14 @@ public class CouponsContract {
         public static final String COLUMN_COUPON_SLOT_INFO = "slot_info";
         public static final String COLUMN_COUPON_CATEGORY_CODE = "category_code";
         public static final String COLUMN_COUPON_BRAND_CODE = "brand_code";
+        public static final String COLUMN_EXPIRATION_DATE = "expiration_date";
+        public static final String COLUMN_BRAND_NAME = "brand_name";
+        public static final String COLUMN_ADDITIONAL_TEXT = "additional_text";
+        public static final String COLUMN_SUMMARY_TEXT = "summary_text";
 
         public static Uri buildCouponUri(long id) {
-            return ContentUris.withAppendedId(CONTENT_URI, id);
+            //return ContentUris.withAppendedId(CONTENT_URI, id);
+            return CONTENT_URI.buildUpon().appendPath("_"+id).build();
         }
 
         public static Uri buildCouponLocation(String locationSetting) {

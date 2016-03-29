@@ -28,7 +28,7 @@ import com.example.android.gcncouponalert.app.data.CouponsContract.CouponEntry;
 public class CouponsDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 9;
+    private static final int DATABASE_VERSION = 11;
 
     static final String DATABASE_NAME = "gcn_coupon.db";
 
@@ -62,6 +62,10 @@ public class CouponsDbHelper extends SQLiteOpenHelper {
                 CouponEntry.COLUMN_COUPON_SLOT_INFO + " INTEGER DEFAULT 0, " +
                 CouponEntry.COLUMN_COUPON_BRAND_CODE + " INTEGER, " +
                 CouponEntry.COLUMN_COUPON_CATEGORY_CODE + " INTEGER, " +
+                CouponEntry.COLUMN_EXPIRATION_DATE + " DATETIME NOT NULL, " +
+                CouponEntry.COLUMN_BRAND_NAME + " TEXT, " +
+                CouponEntry.COLUMN_ADDITIONAL_TEXT + " TEXT, " +
+                CouponEntry.COLUMN_SUMMARY_TEXT + " TEXT, " +
                 // Set up the location column as a foreign key to location table.
                 " FOREIGN KEY (" + CouponEntry.COLUMN_LOC_KEY + ") REFERENCES " +
                 LocationEntry.TABLE_NAME + " (" + LocationEntry._ID + ") " +

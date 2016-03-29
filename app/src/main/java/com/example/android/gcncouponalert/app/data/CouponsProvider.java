@@ -33,9 +33,9 @@ public class CouponsProvider extends ContentProvider {
     private CouponsDbHelper mOpenHelper;
 
     static final int LOCATION = 300;
-    static final int COUPON = 400;
+    static final int COUPON = 400; // this seems like a generic deal
     static final int COUPON_WITH_LOCATION = 401;
-    static final int COUPON_WITH_LOCATION_AND_DATE = 402;
+    static final int COUPON_WITH_ID = 402;
     static final int COUPON_WITH_LOCATION_NOT_NOTIFIED = 403;
 
     private static final SQLiteQueryBuilder sCouponByLocationSettingQueryBuilder;
@@ -70,6 +70,7 @@ public class CouponsProvider extends ContentProvider {
 
         String selection = sLocationSettingNotNotifiedSelection;
         String[] selectionArgs = new String[]{locationSetting};
+        /*
         String queryString = sCouponByLocationSettingQueryBuilder.buildQuery(
                 projection,
                 selection,
@@ -78,7 +79,8 @@ public class CouponsProvider extends ContentProvider {
                 sortOrder,
                 null
         );
-        //Log.d(LOG_TAG,"getCouponByLocationSettingNotNotified query:"+queryString);
+        Log.d(LOG_TAG,"getCouponByLocationSettingNotNotified query:"+queryString);
+        */
         return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
                 projection,
                 selection,
@@ -129,9 +131,9 @@ public class CouponsProvider extends ContentProvider {
 
         matcher.addURI(authority, CouponsContract.PATH_LOCATION, LOCATION);
 
-        matcher.addURI(authority, CouponsContract.PATH_COUPON, COUPON); // note to udacity: this does not really work.
+        matcher.addURI(authority, CouponsContract.PATH_COUPON, COUPON); // note to udacity: this does not really work like you think it does.
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/*", COUPON_WITH_LOCATION);
-        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/*/#", COUPON_WITH_LOCATION_AND_DATE);
+        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/_*", COUPON_WITH_ID);
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/*/not-notified", COUPON_WITH_LOCATION_NOT_NOTIFIED);
         return matcher;
     }
@@ -165,7 +167,7 @@ public class CouponsProvider extends ContentProvider {
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
             case COUPON_WITH_LOCATION:
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
-            case COUPON_WITH_LOCATION_AND_DATE:
+            case COUPON_WITH_ID:
                 return CouponsContract.CouponEntry.CONTENT_ITEM_TYPE;
             case COUPON_WITH_LOCATION_NOT_NOTIFIED:
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
@@ -196,6 +198,19 @@ public class CouponsProvider extends ContentProvider {
             }
 
             case COUPON: {
+                retCursor = mOpenHelper.getReadableDatabase().query(
+                        CouponsContract.CouponEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+
+            case COUPON_WITH_ID: {
                 retCursor = mOpenHelper.getReadableDatabase().query(
                         CouponsContract.CouponEntry.TABLE_NAME,
                         projection,
