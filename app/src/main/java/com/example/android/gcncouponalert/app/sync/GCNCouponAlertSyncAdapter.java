@@ -106,7 +106,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             // Possible parameters are avaiable at OWM's forecast API page, at
             // http://openweathermap.org/API#forecast
             //final String FORECAST_BASE_URL = "http://tools.grocerycouponnetwork.com/api1/coupon/?";
-            final String FORECAST_BASE_URL = "http://www.grocerycouponnetwork.com/api/coupons/get_active_coupons/?";
+            final String COUPON_BASE_URL = "http://www.grocerycouponnetwork.com/api/coupons/get_active_coupons/?";
             //final String AUTH_KEY_PARAM = "auth_key";
             final String LOCATION_PARAM = "zip";
 
@@ -136,7 +136,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
             // do this twice - once for national coupons, once for local coupons
             Uri[] builtUri = new Uri[1];
-            builtUri[0] = Uri.parse(FORECAST_BASE_URL).buildUpon()
+            builtUri[0] = Uri.parse(COUPON_BASE_URL).buildUpon()
                     .appendQueryParameter(LOCATION_PARAM, locationQuery)
                     //.appendQueryParameter(AUTH_KEY_PARAM, BuildConfig.GCN_COUPON_API_KEY)
                     .build();
@@ -275,6 +275,8 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 String additional_text = couponInfo.getString(OWM_COUPON_ADDITIONAL_TEXT);
                 String summary_text = couponInfo.getString(OWM_COUPON_SUMMARY_TEXT);
 
+                long brandId = addBrand(brand_code, brand_name);
+
                 ContentValues couponValues = new ContentValues();
 
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_NAME, coupon_name);
@@ -286,9 +288,10 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_REMOTE_ID, remote_id);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_SLOT_INFO, slot_info);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_CATEGORY_CODE, category_code);
-                couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_BRAND_CODE, brand_code);
+                //couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_BRAND_CODE, brand_code);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_BRAND_KEY, brandId);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_EXPIRATION_DATE, expiration_date);
-                couponValues.put(CouponsContract.CouponEntry.COLUMN_BRAND_NAME, brand_name);
+                //couponValues.put(CouponsContract.CouponEntry.COLUMN_BRAND_NAME, brand_name);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_ADDITIONAL_TEXT, additional_text);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_SUMMARY_TEXT, summary_text);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_LOC_KEY, locationId);
@@ -562,6 +565,49 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         // Wait, that worked?  Yes!
         return locationId;
     }
+
+    long addBrand (String brand_code, String brand_name) {
+        long brandId;
+
+        // First, check if the location with this city name exists in the db
+        Cursor brandCursor = getContext().getContentResolver().query(
+                CouponsContract.BrandEntry.CONTENT_URI,
+                new String[]{CouponsContract.BrandEntry._ID},
+                CouponsContract.BrandEntry.COLUMN_BRAND_CODE + " = ?",
+                new String[]{brand_code},
+                null);
+
+        if (brandCursor.moveToFirst()) {
+            int brandIdIndex = brandCursor.getColumnIndex(CouponsContract.BrandEntry._ID);
+            brandId = brandCursor.getLong(brandIdIndex);
+        } else {
+            // Now that the content provider is set up, inserting rows of data is pretty simple.
+            // First create a ContentValues object to hold the data you want to insert.
+            ContentValues brandValues = new ContentValues();
+
+            // Then add the data, along with the corresponding name of the data type,
+            // so the content provider knows what kind of value is being inserted.
+            //locationValues.put(CouponsContract.LocationEntry.COLUMN_CITY_NAME, cityName);
+            brandValues.put(CouponsContract.BrandEntry.COLUMN_BRAND_CODE, brand_code);
+            brandValues.put(CouponsContract.BrandEntry.COLUMN_BRAND_NAME, brand_name);
+
+            // Finally, insert location data into the database.
+            Uri insertedUri = getContext().getContentResolver().insert(
+                    CouponsContract.BrandEntry.CONTENT_URI,
+                    brandValues
+            );
+
+            // The resulting URI contains the ID for the row.  Extract the locationId from the Uri.
+            brandId = ContentUris.parseId(insertedUri);
+        }
+
+        brandCursor.close();
+        // Wait, that worked?  Yes!
+        return brandId;
+    }
+
+
+
 
     /**
      * Helper method to schedule the sync adapter periodic execution

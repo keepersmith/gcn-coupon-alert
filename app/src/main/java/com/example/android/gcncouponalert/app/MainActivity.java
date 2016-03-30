@@ -23,22 +23,44 @@ import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.location.Location;
 
 import com.example.android.gcncouponalert.app.data.CouponsContract;
 import com.example.android.gcncouponalert.app.sync.GCNCouponAlertSyncAdapter;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
-public class MainActivity extends ActionBarActivity implements CouponsFragment.Callback {
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+public class MainActivity extends ActionBarActivity implements
+        CouponsFragment.Callback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
     private static final String DETAILFRAGMENT_TAG = "DFTAG";
 
     private boolean mTwoPane;
     private String mLocation;
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mLocation = Utility.getPreferredLocation(this);
+
+        // Create an instance of GoogleAPIClient.
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
 
         setContentView(R.layout.activity_main);
 
@@ -84,6 +106,84 @@ public class MainActivity extends ActionBarActivity implements CouponsFragment.C
         GCNCouponAlertSyncAdapter.initializeSyncAdapter(this);
 
         //onNewIntent(getIntent());
+    }
+
+    private void getAndSetZip (double lat, double lon) {
+        HttpURLConnection urlConnection = null;
+        BufferedReader reader = null;
+
+        final String OPENMAP_BASE_URL = "http://nominatim.openstreetmap.org/reverse?";
+        Uri builtUri;
+        builtUri = Uri.parse(OPENMAP_BASE_URL).buildUpon()
+                .appendQueryParameter("format", "json")
+                .appendQueryParameter("lat", Double.toString(lat))
+                .appendQueryParameter("lon", Double.toString(lon))
+                .appendQueryParameter("addressetails", "1")
+                .build();
+        try {
+            URL url = new URL(builtUri.toString());
+            Log.d(LOG_TAG, "Calling API URL: " + builtUri.toString());
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.connect();
+            Log.d(LOG_TAG, " Got back: " +urlConnection.getResponseCode()+" "+urlConnection.getResponseMessage());
+            // Read the input stream into a String
+            InputStream inputStream = urlConnection.getInputStream();
+            StringBuffer buffer = new StringBuffer();
+            if (inputStream == null) {
+                // Nothing to do.
+                return;
+            }
+            reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                // But it does make debugging a *lot* easier if you print out the completed
+                // buffer for debugging.
+                buffer.append(line + "\n");
+            }
+            if (buffer.length() == 0) {
+                // Stream was empty.  No point in parsing.
+                Log.d(LOG_TAG, "API returned nothing: " + builtUri.toString());
+                return;
+            }
+            String mapJsonStr = buffer.toString();
+            Log.d(LOG_TAG, "API returned this: " + mapJsonStr);
+            //found_data = getCouponDataFromJson(couponJsonStr, locationQuery);
+        } catch (Exception e) {
+
+        }
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            Log.d(LOG_TAG,"Lat: "+mLastLocation.getLatitude()+"; Lon: "+mLastLocation.getLongitude());
+            getAndSetZip(mLastLocation.getLatitude(),mLastLocation.getLongitude());
+            //mLatitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
+            //mLongitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
+        }
+    }
+
+    protected void onStart() {
+        mGoogleApiClient.connect();
+        super.onStart();
+    }
+
+    protected void onStop() {
+        mGoogleApiClient.disconnect();
+        super.onStop();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
     }
 
     /*

@@ -44,13 +44,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="New Text"
-                    android:id="@+id/detail_brand_name" />
+                    android:id="@+id/detail_additional_text" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="New Text"
-                    android:id="@+id/detail_additional_text" />
+                    android:id="@+id/detail_brand_name" />
             </LinearLayout>
         </LinearLayout>
 
@@ -63,24 +63,19 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/detail_humidity_textview"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:textAppearance="?android:textAppearanceLarge" />
+                android:text="New Text"
+                android:id="@+id/detail_notification_text"
+                android:layout_gravity="center_horizontal" />
 
-            <TextView
-                android:id="@+id/detail_pressure_textview"
+            <Switch
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_width="match_parent"
-                android:textAppearance="?android:textAppearanceLarge" />
+                android:id="@+id/detail_brand_notification_toggle"
+                android:layout_gravity="center_horizontal"
+                android:visibility="invisible" />
 
-            <TextView
-                android:id="@+id/detail_wind_textview"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_width="match_parent"
-                android:textAppearance="?android:textAppearanceLarge" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

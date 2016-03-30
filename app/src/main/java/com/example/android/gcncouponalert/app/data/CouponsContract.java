@@ -43,6 +43,7 @@ public class CouponsContract {
     // At least, let's hope not.  Don't be that dev, reader.  Don't be that dev.
     public static final String PATH_LOCATION = "location";
     public static final String PATH_COUPON = "coupon";
+    public static final String PATH_BRAND = "brand";
 
     // To make it easy to query for the exact date, we normalize all dates that go into
     // the database to the start of the the Julian day at UTC.
@@ -88,14 +89,32 @@ public class CouponsContract {
         }
     }
 
+    /* Inner class that defines the table contents of the brand table */
+    public static final class BrandEntry implements BaseColumns {
+
+        public static final Uri CONTENT_URI =
+                BASE_CONTENT_URI.buildUpon().appendPath(PATH_BRAND).build();
+
+        public static final String CONTENT_TYPE =
+                ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_BRAND;
+        public static final String CONTENT_ITEM_TYPE =
+                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_BRAND;
+
+        // Table name
+        public static final String TABLE_NAME = "brand";
+
+        public static final String COLUMN_BRAND_CODE = "brand_code";
+        public static final String COLUMN_BRAND_NAME = "brand_name";
+        public static final String COLUMN_NOTIFICATION_FLAG = "notification_flag";
+
+        public static Uri buildBrandUri(long id) {
+            return CONTENT_URI.buildUpon().appendPath("brand").appendPath(Long.toString(id)).build();
+        }
+    }
 
 
     /* Inner class that defines the table contents of the weather table */
     public static final class CouponEntry implements BaseColumns {
-
-        public static String getCouponCodeFromUri(Uri uri) {
-            return uri.getPathSegments().get(1);
-        }
 
         public static final Uri CONTENT_URI =
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_COUPON).build();
@@ -109,6 +128,7 @@ public class CouponsContract {
 
         public static final String COLUMN_COUPON_CODE = "coupon_code";
         public static final String COLUMN_LOC_KEY = "location_id";
+        public static final String COLUMN_BRAND_KEY = "brand_id";
         public static final String COLUMN_COUPON_NAME = "coupon_name";
         public static final String COLUMN_LAST_ACTIVE_DATE = "last_active";
         public static final String COLUMN_DATE_CREATED = "date_created";
@@ -118,9 +138,9 @@ public class CouponsContract {
         public static final String COLUMN_COUPON_REMOTE_ID = "remote_id";
         public static final String COLUMN_COUPON_SLOT_INFO = "slot_info";
         public static final String COLUMN_COUPON_CATEGORY_CODE = "category_code";
-        public static final String COLUMN_COUPON_BRAND_CODE = "brand_code";
+        //public static final String COLUMN_COUPON_BRAND_CODE = "brand_code";
         public static final String COLUMN_EXPIRATION_DATE = "expiration_date";
-        public static final String COLUMN_BRAND_NAME = "brand_name";
+        //public static final String COLUMN_BRAND_NAME = "brand_name";
         public static final String COLUMN_ADDITIONAL_TEXT = "additional_text";
         public static final String COLUMN_SUMMARY_TEXT = "summary_text";
 
@@ -140,6 +160,11 @@ public class CouponsContract {
         public static String getLocationSettingFromUri(Uri uri) {
             return uri.getPathSegments().get(1);
         }
+
+        public static String getCouponIDFromUri(Uri uri) {
+            return uri.getPathSegments().get(2);
+        }
+
 
     }
 }

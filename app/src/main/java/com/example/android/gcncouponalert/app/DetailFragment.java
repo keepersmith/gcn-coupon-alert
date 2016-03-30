@@ -15,6 +15,7 @@
  */
 package com.example.android.gcncouponalert.app;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -32,8 +33,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.example.android.gcncouponalert.app.data.CouponsContract;
 import com.example.android.gcncouponalert.app.data.CouponsContract.CouponEntry;
@@ -58,15 +62,15 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             CouponEntry.TABLE_NAME + "." + CouponEntry._ID,
             CouponEntry.COLUMN_COUPON_CODE,
             CouponEntry.COLUMN_COUPON_NAME,
-            // This works because the CouponsProvider returns location data joined with
-            // weather data, even though they're stored in two different tables.
-            //CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING,
             CouponEntry.COLUMN_SUMMARY_TEXT,
-            CouponEntry.COLUMN_BRAND_NAME,
+            CouponsContract.BrandEntry.COLUMN_BRAND_NAME,
             CouponEntry.COLUMN_ADDITIONAL_TEXT,
             CouponsContract.CouponEntry.COLUMN_COUPON_IMAGE_URL_80x100,
             CouponsContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100,
-            CouponsContract.CouponEntry.COLUMN_COUPON_REMOTE_ID
+            CouponsContract.CouponEntry.COLUMN_COUPON_REMOTE_ID,
+            CouponsContract.CouponEntry.COLUMN_BRAND_KEY,
+            CouponsContract.BrandEntry.COLUMN_NOTIFICATION_FLAG
+
     };
 
     // These indices are tied to DETAIL_COLUMNS.  If DETAIL_COLUMNS changes, these
@@ -74,19 +78,23 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     public static final int COL_COUPON_ID = 0;
     public static final int COL_COUPON_CODE = 1;
     public static final int COL_COUPON_NAME = 2;
-    //public static final int COL_LOCATION_SETTING = 3;
     public static final int COL_SUMMARY_TEXT = 3;
     public static final int COL_BRAND_NAME = 4;
     public static final int COL_ADDITIONAL_TEXT = 5;
     public static final int COL_IMAGE_URL_80x100 = 6;
     public static final int COL_IMAGE_EXT_80x100 = 7;
     public static final int COL_REMOTE_ID = 8;
+    public static final int COL_BRAND_KEY = 9;
+    public static final int COL_BRAND_NOTIFICATION_FLAG = 10;
 
 
     private ImageView mIconView;
     private TextView mSummaryView;
-    private TextView mBrandNameView;
     private TextView mAdditionalView;
+    private TextView mBrandNameView;
+    private TextView mNotificationView;
+    private Switch mNotificationToggle;
+
     /*
     private TextView mFriendlyDateView;
     private TextView mDateView;
@@ -114,8 +122,13 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         mIconView = (ImageView) rootView.findViewById(R.id.detail_icon);
         mSummaryView = (TextView) rootView.findViewById(R.id.detail_summary_text);
-        mBrandNameView = (TextView) rootView.findViewById(R.id.detail_brand_name);
         mAdditionalView = (TextView) rootView.findViewById(R.id.detail_additional_text);
+        mBrandNameView = (TextView) rootView.findViewById(R.id.detail_brand_name);
+        mNotificationView = (TextView) rootView.findViewById(R.id.detail_notification_text);
+        mNotificationToggle = (Switch) rootView.findViewById(R.id.detail_brand_notification_toggle);
+
+        //mNotificationToggle.setVisibility(View.INVISIBLE);
+
         /*
         mDateView = (TextView) rootView.findViewById(R.id.detail_date_textview);
         mFriendlyDateView = (TextView) rootView.findViewById(R.id.detail_day_textview);
@@ -190,67 +203,49 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+    public void onLoadFinished(Loader<Cursor> loader, final Cursor data) {
         Log.d(LOG_TAG,"any data? "+mUri);
         if (data != null && data.moveToFirst()) {
-            Log.d(LOG_TAG,"with data");
-            // Read weather condition ID from cursor
-            //int weatherId = data.getInt(COL_WEATHER_CONDITION_ID);
-
-            // Use weather art image
-            //mIconView.setImageResource(Utility.getArtResourceForWeatherCondition(weatherId));
+            //Log.d(LOG_TAG, "with data");
             mIconView.setImageBitmap(Utility.loadImageFromLocalStore(data.getString(DetailFragment.COL_IMAGE_URL_80x100), data.getString(DetailFragment.COL_IMAGE_EXT_80x100)));
-
-            // Read date from cursor and update views for day of week and date
-            //long date = data.getLong(COL_WEATHER_DATE);
-            //String friendlyDateText = Utility.getDayName(getActivity(), date);
-            //String dateText = Utility.getFormattedMonthDay(getActivity(), date);
-            //mFriendlyDateView.setText(friendlyDateText);
-            //mDateView.setText(dateText);
-
-            // Read description from cursor and update view
-            //String description = data.getString(COL_COUPON_NAME);
-            mSummaryView.setText(data.getString(COL_SUMMARY_TEXT));
-            mBrandNameView.setText(data.getString(COL_BRAND_NAME));
-            mAdditionalView.setText(data.getString(COL_ADDITIONAL_TEXT));
-
-            // For accessibility, add a content description to the icon field
             mIconView.setContentDescription(data.getString(COL_COUPON_NAME));
+            mSummaryView.setText(data.getString(COL_SUMMARY_TEXT));
+            mAdditionalView.setText(data.getString(COL_ADDITIONAL_TEXT));
+            mBrandNameView.setText(data.getString(COL_BRAND_NAME));
+            mNotificationView.setText("Get New Coupon Alerts for " + data.getString(COL_BRAND_NAME) + "?");
 
+            boolean notification_checked = false;
+            if (data.getInt(COL_BRAND_NOTIFICATION_FLAG) == 1) {
+                notification_checked = true;
+            }
+            mNotificationToggle.setChecked(notification_checked);
+            mNotificationToggle.jumpDrawablesToCurrentState();
 
-
-            // Read high temperature from cursor and update view
-            //boolean isMetric = Utility.isMetric(getActivity());
-
-            //double high = data.getDouble(COL_WEATHER_MAX_TEMP);
-            //String highString = Utility.formatTemperature(getActivity(), high);
-            //mHighTempView.setText(highString);
-
-            // Read low temperature from cursor and update view
-            //double low = data.getDouble(COL_WEATHER_MIN_TEMP);
-            //String lowString = Utility.formatTemperature(getActivity(), low);
-            //mLowTempView.setText(lowString);
-
-            // Read humidity from cursor and update view
-            //float humidity = data.getFloat(COL_WEATHER_HUMIDITY);
-            //mHumidityView.setText(getActivity().getString(R.string.format_humidity, humidity));
-
-            // Read wind speed and direction from cursor and update view
-            //float windSpeedStr = data.getFloat(COL_WEATHER_WIND_SPEED);
-            //float windDirStr = data.getFloat(COL_WEATHER_DEGREES);
-            //mWindView.setText(Utility.getFormattedWind(getActivity(), windSpeedStr, windDirStr));
-
-            // Read pressure from cursor and update view
-            //float pressure = data.getFloat(COL_WEATHER_PRESSURE);
-            //mPressureView.setText(getActivity().getString(R.string.format_pressure, pressure));
-
-            // We still need this for the share intent
-            //mForecast = String.format("%s - %s - %s/%s", dateText, description, high, low);
+            mNotificationToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    int checked_value;
+                    if (isChecked) {
+                        // The toggle is enabled
+                        Log.d(LOG_TAG, "Toggle enabled!");
+                        checked_value = 1;
+                    } else {
+                        // The toggle is disabled
+                        Log.d(LOG_TAG, "Toggle disabled!");
+                        checked_value = 0;
+                    }
+                    ContentValues notification_flag = new ContentValues();
+                    notification_flag.put(CouponsContract.BrandEntry.COLUMN_NOTIFICATION_FLAG, checked_value);
+                    String[] brandId = new String[]{data.getString(COL_BRAND_KEY)};
+                    getActivity().getContentResolver().update(CouponsContract.BrandEntry.CONTENT_URI, notification_flag, CouponsContract.BrandEntry._ID + " = ?", brandId);
+                }
+            });
 
             // If onCreateOptionsMenu has already happened, we need to update the share intent now.
             if (mShareActionProvider != null) {
                 mShareActionProvider.setShareIntent(createShareForecastIntent());
             }
+
+            mNotificationToggle.setVisibility(View.VISIBLE);
         }
     }
 

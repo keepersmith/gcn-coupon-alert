@@ -37,6 +37,7 @@ public class CouponsProvider extends ContentProvider {
     static final int COUPON_WITH_LOCATION = 401;
     static final int COUPON_WITH_ID = 402;
     static final int COUPON_WITH_LOCATION_NOT_NOTIFIED = 403;
+    static final int BRAND = 500;
 
     private static final SQLiteQueryBuilder sCouponByLocationSettingQueryBuilder;
 
@@ -46,12 +47,19 @@ public class CouponsProvider extends ContentProvider {
         //This is an inner join which looks like
         //weather INNER JOIN location ON weather.location_id = location._id
         sCouponByLocationSettingQueryBuilder.setTables(
-                CouponsContract.CouponEntry.TABLE_NAME + " INNER JOIN " +
+                CouponsContract.CouponEntry.TABLE_NAME +
+                        " INNER JOIN " +
                         CouponsContract.LocationEntry.TABLE_NAME +
                         " ON " + CouponsContract.CouponEntry.TABLE_NAME +
                         "." + CouponsContract.CouponEntry.COLUMN_LOC_KEY +
                         " = " + CouponsContract.LocationEntry.TABLE_NAME +
-                        "." + CouponsContract.LocationEntry._ID);
+                        "." + CouponsContract.LocationEntry._ID +
+                        " INNER JOIN " +
+                        CouponsContract.BrandEntry.TABLE_NAME +
+                        " ON " + CouponsContract.CouponEntry.TABLE_NAME +
+                        "." + CouponsContract.CouponEntry.COLUMN_BRAND_KEY +
+                        " = " + CouponsContract.BrandEntry.TABLE_NAME +
+                        "." + CouponsContract.BrandEntry._ID);
     }
 
     //location.location_setting = ?
@@ -93,11 +101,12 @@ public class CouponsProvider extends ContentProvider {
 
     private Cursor getCouponByID(Uri uri, String[] projection, String sortOrder) {
         //String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
+        String couponID = CouponsContract.CouponEntry.getCouponIDFromUri(uri);
 
         String selection = CouponsContract.CouponEntry.TABLE_NAME+
                 "."+CouponsContract.CouponEntry._ID + " = ? ";
 
-        String[] selectionArgs = new String[]{uri.getPathSegments().get(2)};
+        String[] selectionArgs = new String[]{couponID};
 
         return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
                 projection,
@@ -148,6 +157,7 @@ public class CouponsProvider extends ContentProvider {
 
 
         matcher.addURI(authority, CouponsContract.PATH_LOCATION, LOCATION);
+        matcher.addURI(authority, CouponsContract.PATH_BRAND, BRAND);
 
         matcher.addURI(authority, CouponsContract.PATH_COUPON, COUPON); // note to udacity: this does not really work like you think it does.
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#", COUPON_WITH_LOCATION);
@@ -181,6 +191,8 @@ public class CouponsProvider extends ContentProvider {
             // Student: Uncomment and fill out these two cases
             case LOCATION:
                 return CouponsContract.LocationEntry.CONTENT_TYPE;
+            case BRAND:
+                return CouponsContract.BrandEntry.CONTENT_TYPE;
             case COUPON:
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
             case COUPON_WITH_LOCATION:
@@ -205,6 +217,19 @@ public class CouponsProvider extends ContentProvider {
             case LOCATION: {
                 retCursor = mOpenHelper.getReadableDatabase().query(
                         CouponsContract.LocationEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+
+            case BRAND: {
+                retCursor = mOpenHelper.getReadableDatabase().query(
+                        CouponsContract.BrandEntry.TABLE_NAME,
                         projection,
                         selection,
                         selectionArgs,
@@ -293,6 +318,14 @@ public class CouponsProvider extends ContentProvider {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
             }
+            case BRAND: {
+                long _id = db.insert(CouponsContract.BrandEntry.TABLE_NAME, null, values);
+                if ( _id > 0 )
+                    returnUri = CouponsContract.BrandEntry.buildBrandUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            }
             case COUPON: {
                 long _id = db.insert(CouponsContract.CouponEntry.TABLE_NAME, null, values);
                 if ( _id > 0 )
@@ -319,6 +352,10 @@ public class CouponsProvider extends ContentProvider {
             case LOCATION:
                 rowsDeleted = db.delete(
                         CouponsContract.LocationEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case BRAND:
+                rowsDeleted = db.delete(
+                        CouponsContract.BrandEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             case COUPON:
                 rowsDeleted = db.delete(
@@ -354,6 +391,10 @@ public class CouponsProvider extends ContentProvider {
         switch (match) {
             case LOCATION:
                 rowsUpdated = db.update(CouponsContract.LocationEntry.TABLE_NAME, values, selection,
+                        selectionArgs);
+                break;
+            case BRAND:
+                rowsUpdated = db.update(CouponsContract.BrandEntry.TABLE_NAME, values, selection,
                         selectionArgs);
                 break;
             case COUPON:

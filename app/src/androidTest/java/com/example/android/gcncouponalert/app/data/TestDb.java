@@ -54,7 +54,7 @@ public class TestDb extends AndroidTestCase {
         // Android metadata (db version information)
         final HashSet<String> tableNameHashSet = new HashSet<String>();
         tableNameHashSet.add(CouponsContract.LocationEntry.TABLE_NAME);
-        tableNameHashSet.add(CouponsContract.WeatherEntry.TABLE_NAME);
+        tableNameHashSet.add(CouponsContract.BrandEntry.TABLE_NAME);
         tableNameHashSet.add(CouponsContract.CouponEntry.TABLE_NAME);
 
         mContext.deleteDatabase(CouponsDbHelper.DATABASE_NAME);
@@ -154,11 +154,12 @@ public class TestDb extends AndroidTestCase {
         ContentValues weatherValues = TestUtilities.createWeatherValues(locationRowId);
 
         // Third Step (Weather): Insert ContentValues into database and get a row ID back
-        long weatherRowId = db.insert(CouponsContract.WeatherEntry.TABLE_NAME, null, weatherValues);
-        assertTrue(weatherRowId != -1);
+        //long weatherRowId = db.insert(CouponsContract.WeatherEntry.TABLE_NAME, null, weatherValues);
+        //assertTrue(weatherRowId != -1);
 
         // Fourth Step: Query the database and receive a Cursor back
         // A cursor is your primary interface to the query results.
+        /*
         Cursor weatherCursor = db.query(
                 CouponsContract.WeatherEntry.TABLE_NAME,  // Table to Query
                 null, // leaving "columns" null just returns all the columns.
@@ -168,20 +169,21 @@ public class TestDb extends AndroidTestCase {
                 null, // columns to filter by row groups
                 null  // sort order
         );
+        */
 
         // Move the cursor to the first valid database row and check to see if we have any rows
-        assertTrue( "Error: No Records returned from location query", weatherCursor.moveToFirst() );
+        //assertTrue( "Error: No Records returned from location query", weatherCursor.moveToFirst() );
 
         // Fifth Step: Validate the location Query
-        TestUtilities.validateCurrentRecord("testInsertReadDb weatherEntry failed to validate",
-                weatherCursor, weatherValues);
+        //TestUtilities.validateCurrentRecord("testInsertReadDb weatherEntry failed to validate",
+                //weatherCursor, weatherValues);
 
         // Move the cursor to demonstrate that there is only one record in the database
-        assertFalse( "Error: More than one record returned from weather query",
-                weatherCursor.moveToNext() );
+        //assertFalse( "Error: More than one record returned from weather query",
+                //weatherCursor.moveToNext() );
 
         // Sixth Step: Close cursor and database
-        weatherCursor.close();
+        //weatherCursor.close();
         dbHelper.close();
     }
 
