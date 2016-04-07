@@ -37,6 +37,8 @@ public class CouponsProvider extends ContentProvider {
     static final int COUPON_WITH_LOCATION = 401;
     static final int COUPON_WITH_ID = 402;
     static final int COUPON_WITH_LOCATION_NOT_NOTIFIED = 403;
+    static final int COUPON_WITH_LOCATION_BRAND_NOT_NOTIFIED = 404;
+    static final int COUPON_WITH_LOCATION_BRAND = 405;
     static final int BRAND = 500;
 
     private static final SQLiteQueryBuilder sCouponByLocationSettingQueryBuilder;
@@ -63,14 +65,53 @@ public class CouponsProvider extends ContentProvider {
     }
 
     //location.location_setting = ?
+    private static final String sLocationSettingBrandSelection =
+            CouponsContract.LocationEntry.TABLE_NAME+
+                    "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
+                    CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry.COLUMN_BRAND_KEY + " = ?";
+
     private static final String sLocationSettingSelection =
             CouponsContract.LocationEntry.TABLE_NAME+
                     "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? ";
+
 
     private static final String sLocationSettingNotNotifiedSelection =
             CouponsContract.LocationEntry.TABLE_NAME +
                     "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
                     CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry.COLUMN_NOTIFIED + " = 0 ";
+
+    private static final String sLocationSettingBrandNotNotifiedSelection =
+            CouponsContract.LocationEntry.TABLE_NAME +
+                    "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
+                    CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry.COLUMN_BRAND_KEY + " = ? AND " +
+                    CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry.COLUMN_NOTIFIED + " = 0 ";
+
+    private Cursor getCouponByLocationSettingBrandNotNotified(Uri uri, String[] projection, String sortOrder) {
+        String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
+        String brand_code = CouponsContract.CouponEntry.getBrandFromUri(uri);
+
+        String selection = sLocationSettingBrandNotNotifiedSelection;
+        String[] selectionArgs = new String[]{locationSetting,brand_code};
+        /*
+        String queryString = sCouponByLocationSettingQueryBuilder.buildQuery(
+                projection,
+                selection,
+                null,
+                null,
+                sortOrder,
+                null
+        );
+        Log.d(LOG_TAG,"getCouponByLocationSettingNotNotified query:"+queryString);
+        */
+        return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
 
 
     private Cursor getCouponByLocationSettingNotNotified(Uri uri, String[] projection, String sortOrder) {
@@ -134,6 +175,22 @@ public class CouponsProvider extends ContentProvider {
         );
     }
 
+    private Cursor getCouponByLocationSettingBrand(Uri uri, String[] projection, String sortOrder) {
+        String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
+        String brand_code = CouponsContract.CouponEntry.getBrandFromUri(uri);
+
+        String selection = sLocationSettingBrandSelection;
+        String[] selectionArgs = new String[]{locationSetting,brand_code};
+
+        return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
 
 
 
@@ -161,8 +218,10 @@ public class CouponsProvider extends ContentProvider {
 
         matcher.addURI(authority, CouponsContract.PATH_COUPON, COUPON); // note to udacity: this does not really work like you think it does.
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#", COUPON_WITH_LOCATION);
+        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/#", COUPON_WITH_LOCATION_BRAND);
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/id/#", COUPON_WITH_ID);
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/not-notified", COUPON_WITH_LOCATION_NOT_NOTIFIED);
+        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/#/not-notified", COUPON_WITH_LOCATION_BRAND_NOT_NOTIFIED);
         return matcher;
     }
 
@@ -197,9 +256,13 @@ public class CouponsProvider extends ContentProvider {
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
             case COUPON_WITH_LOCATION:
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
+            case COUPON_WITH_LOCATION_BRAND:
+                return CouponsContract.CouponEntry.CONTENT_TYPE;
             case COUPON_WITH_ID:
                 return CouponsContract.CouponEntry.CONTENT_ITEM_TYPE;
             case COUPON_WITH_LOCATION_NOT_NOTIFIED:
+                return CouponsContract.CouponEntry.CONTENT_TYPE;
+            case COUPON_WITH_LOCATION_BRAND_NOT_NOTIFIED:
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -278,8 +341,21 @@ public class CouponsProvider extends ContentProvider {
 
             }
 
+            case COUPON_WITH_LOCATION_BRAND: {
+                //Log.d(LOG_TAG,"COUPON_WITH_LOCATION: "+selection);
+                retCursor = getCouponByLocationSettingBrand(uri, projection, sortOrder);
+                break;
+
+            }
+
             case COUPON_WITH_LOCATION_NOT_NOTIFIED: {
                 retCursor = getCouponByLocationSettingNotNotified(uri, projection, sortOrder);
+                break;
+
+            }
+
+            case COUPON_WITH_LOCATION_BRAND_NOT_NOTIFIED: {
+                retCursor = getCouponByLocationSettingBrandNotNotified(uri, projection, sortOrder);
                 break;
 
             }

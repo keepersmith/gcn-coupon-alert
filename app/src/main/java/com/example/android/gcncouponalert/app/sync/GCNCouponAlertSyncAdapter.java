@@ -138,6 +138,12 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             }
             String mapJsonStr = buffer.toString();
             Log.d(LOG_TAG, "API returned this: " + mapJsonStr);
+
+            JSONObject mapJson = new JSONObject(mapJsonStr);
+            JSONObject addressJson = mapJson.getJSONObject("address");
+            zip_code = addressJson.getString("postcode");
+
+            return zip_code;
             //found_data = getCouponDataFromJson(couponJsonStr, locationQuery);
         } catch (Exception e) {
             Log.e(LOG_TAG, e.getMessage(), e);

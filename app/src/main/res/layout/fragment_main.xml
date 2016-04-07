@@ -10,4 +10,6 @@
         android:layout_height="match_parent"
         android:divider="@color/gcncouponalert_dark_green"
         android:dividerHeight="2dp" />
+
+
 </FrameLayout>

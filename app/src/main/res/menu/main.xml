@@ -2,6 +2,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.android.gcncouponalert.app.MainActivity" >
+
+    <item android:id="@+id/coupons_spinner"
+        android:title="@string/coupon_prompt"
+        app:actionViewClass="android.widget.Spinner"
+        app:showAsAction="always" />
+ <!--  android:actionLayout="@layout/spin_coupons"
+         -->
+
+
+    <!--
+    <Spinner
+        android:id="@+id/coupons_spinner"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/coupon_filter_options"
+        android:prompt="@string/coupon_prompt" />
+        -->
+
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"

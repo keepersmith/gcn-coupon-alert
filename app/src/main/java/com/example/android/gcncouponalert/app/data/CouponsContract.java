@@ -161,6 +161,10 @@ public class CouponsContract {
             return uri.getPathSegments().get(1);
         }
 
+        public static String getBrandFromUri(Uri uri) {
+            return uri.getPathSegments().get(2);
+        }
+
         public static String getCouponIDFromUri(Uri uri) {
             return uri.getPathSegments().get(2);
         }

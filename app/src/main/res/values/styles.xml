@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
    <!-- Base application theme. -->
     <style name="AppTheme" parent="@style/Theme.AppCompat.Light.DarkActionBar">
@@ -21,6 +21,7 @@
         <!--<item name="logo">@drawable/ic_logo</item>-->
         <item name="logo">@drawable/gcnlogo_grbg</item>
     </style>
+
 
     <!-- Style for forecast listview -->
     <style name="ForecastListStyle">

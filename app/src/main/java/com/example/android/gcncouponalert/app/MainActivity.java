@@ -21,11 +21,14 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.location.Location;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import com.example.android.gcncouponalert.app.data.CouponsContract;
 import com.example.android.gcncouponalert.app.sync.GCNCouponAlertSyncAdapter;
@@ -254,6 +257,28 @@ public class MainActivity extends ActionBarActivity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+        //Spinner spinner = (Spinner) findViewById(R.id.coupons_spinner);
+        MenuItem item = menu.findItem(R.id.coupons_spinner);
+        Spinner spinner =(Spinner) item.getActionView();
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.coupon_filter_options, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(new SpinnerActivity());
+        //MenuItem item = menu.findItem(R.id.coupons_spinner);
+        //Spinner spinner =(Spinner) item.getActionView();
+        //setupSpinner(spinner);
+        //String[] items={"All","Favorites"};
+        //wrap the items in the Adapter
+        //ArrayAdapter<String> adapter=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item,items);
+        //assign adapter to the Spinner
+        //spinner.setAdapter(adapter);
+
+
+        //MenuItem item = menu.findItem(R.id.coupons_spinner);
+        //Spinner spinner = (Spinner) MenuItemCompat.getActionView(item);
+        //spinner.setAdapter(adapter); // set the adapter to provide layout of rows and content
+        //s.setOnItemSelectedListener(onItemSelectedListener); // set the listener, to perform actions based on item selection
         return true;
     }
 
