@@ -19,6 +19,9 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -30,10 +33,14 @@ import android.text.format.Time;
 import android.util.Log;
 
 import com.example.android.gcncouponalert.app.BuildConfig;
+import com.example.android.gcncouponalert.app.CouponsFragment;
 import com.example.android.gcncouponalert.app.MainActivity;
 import com.example.android.gcncouponalert.app.R;
 import com.example.android.gcncouponalert.app.Utility;
 import com.example.android.gcncouponalert.app.data.CouponsContract;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -48,6 +55,8 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Vector;
 
@@ -78,14 +87,127 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
     private static final int INDEX_COUPON_CODE = 1;
     private static final int INDEX_COUPON_NAME = 2;
 
+    //private GoogleApiClient mGoogleApiClient;
+    //private Location mLastLocation;
+
     public GCNCouponAlertSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
+    }
+
+    private String getAndSetZip (double lat, double lon) {
+        HttpURLConnection urlConnection = null;
+        BufferedReader reader = null;
+        String zip_code = "";
+
+        final String OPENMAP_BASE_URL = "http://nominatim.openstreetmap.org/reverse?";
+        Uri builtUri;
+        builtUri = Uri.parse(OPENMAP_BASE_URL).buildUpon()
+                .appendQueryParameter("format", "json")
+                .appendQueryParameter("lat", Double.toString(lat))
+                .appendQueryParameter("lon", Double.toString(lon))
+                .appendQueryParameter("addressetails", "1")
+                .build();
+        try {
+            URL url = new URL(builtUri.toString());
+            Log.d(LOG_TAG, "Calling API URL: " + builtUri.toString());
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+            urlConnection.setConnectTimeout(1000);
+            urlConnection.connect();
+            Log.d(LOG_TAG, " Got back: " +urlConnection.getResponseCode()+" "+urlConnection.getResponseMessage());
+            // Read the input stream into a String
+            InputStream inputStream = urlConnection.getInputStream();
+            StringBuffer buffer = new StringBuffer();
+            if (inputStream == null) {
+                // Nothing to do.
+                return zip_code;
+            }
+            reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                // But it does make debugging a *lot* easier if you print out the completed
+                // buffer for debugging.
+                buffer.append(line + "\n");
+            }
+            if (buffer.length() == 0) {
+                // Stream was empty.  No point in parsing.
+                Log.d(LOG_TAG, "API returned nothing: " + builtUri.toString());
+                return zip_code;
+            }
+            String mapJsonStr = buffer.toString();
+            Log.d(LOG_TAG, "API returned this: " + mapJsonStr);
+            //found_data = getCouponDataFromJson(couponJsonStr, locationQuery);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, e.getMessage(), e);
+            e.printStackTrace();
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (final IOException e) {
+                    Log.e(LOG_TAG, "Error closing stream", e);
+                }
+            }
+            return zip_code;
+        }
+    }
+
+    private String getZipCodeFromLocation(Location location) {
+        Address addr = getAddressFromLocation(location);
+        return addr.getPostalCode() == null ? "" : addr.getPostalCode();
+    }
+
+    private Address getAddressFromLocation(Location location) {
+        Geocoder geocoder = new Geocoder(getContext());
+        Address address = new Address(Locale.getDefault());
+        try {
+            List<Address> addr = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+            if (addr.size() > 0) {
+                address = addr.get(0);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return address;
     }
 
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(LOG_TAG, "Starting sync");
-        String locationQuery = Utility.getPreferredLocation(getContext());
+
+        //if (MainActivity.mLastLocation != null) {
+            //getAndSetZip(MainActivity.mLastLocation.getLatitude(), MainActivity.mLastLocation.getLongitude());
+        //}
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        String zip_code = prefs.getString(getContext().getString(R.string.pref_location_key),null);
+        Log.d(LOG_TAG, "Zip: " + zip_code);
+        if (zip_code == null) {
+            cSyncLocation oSyncLocation = new cSyncLocation();
+            Location oLocation = oSyncLocation.GetLocationBlocking(getContext());
+            if (oLocation != null) {
+                //zip_code = getZipCodeFromLocation(oLocation);
+                zip_code = getAndSetZip(oLocation.getLatitude(),oLocation.getLongitude());
+                Log.d(LOG_TAG, "Lat: " + oLocation.getLatitude() + "; Lon: " + oLocation.getLongitude() + "; Zip: " + zip_code);
+                if (!zip_code.equals("")) {
+                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+                    SharedPreferences.Editor editor = preferences.edit();
+                    editor.putString(getContext().getString(R.string.pref_location_key), zip_code);
+                    editor.commit();
+                }
+            }
+        }
+        String locationQuery;
+        if (!zip_code.equals("")) {
+            locationQuery = zip_code;
+        } else {
+            locationQuery = Utility.getPreferredLocation(getContext());
+        }
+
 
         // These two need to be declared outside the try/catch
         // so that they can be closed in the finally block.
@@ -431,91 +553,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         }
     }
 
-    /*
-    private void notifyWeather() {
-        Context context = getContext();
-        //checking the last update and notify if it' the first of the day
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String displayNotificationsKey = context.getString(R.string.pref_enable_notifications_key);
-        boolean displayNotifications = prefs.getBoolean(displayNotificationsKey,
-                Boolean.parseBoolean(context.getString(R.string.pref_enable_notifications_default)));
-
-        if ( displayNotifications ) {
-
-            String lastNotificationKey = context.getString(R.string.pref_last_notification);
-            long lastSync = prefs.getLong(lastNotificationKey, 0);
-
-            if (System.currentTimeMillis() - lastSync >= ONE_MINUTE_IN_MILLIS) {
-                // Last sync was more than 1 day ago, let's send a notification with the weather.
-                String locationQuery = Utility.getPreferredLocation(context);
-
-                Uri weatherUri = CouponsContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
-
-                // we'll query our contentProvider, as always
-                Cursor cursor = context.getContentResolver().query(weatherUri, NOTIFY_WEATHER_PROJECTION, null, null, null);
-
-                if (cursor.moveToFirst()) {
-                    int weatherId = cursor.getInt(INDEX_WEATHER_ID);
-                    double high = cursor.getDouble(INDEX_MAX_TEMP);
-                    double low = cursor.getDouble(INDEX_MIN_TEMP);
-                    String desc = cursor.getString(INDEX_SHORT_DESC);
-
-                    int iconId = Utility.getIconResourceForWeatherCondition(weatherId);
-                    Resources resources = context.getResources();
-                    Bitmap largeIcon = BitmapFactory.decodeResource(resources,
-                            Utility.getArtResourceForWeatherCondition(weatherId));
-                    String title = context.getString(R.string.app_name);
-
-                    // Define the text of the forecast.
-                    String contentText = String.format(context.getString(R.string.format_notification_weather),
-                            desc,
-                            Utility.formatTemperature(context, high),
-                            Utility.formatTemperature(context, low));
-
-                    // NotificationCompatBuilder is a very convenient way to build backward-compatible
-                    // notifications.  Just throw in some data.
-                    NotificationCompat.Builder mBuilder =
-                            new NotificationCompat.Builder(getContext())
-                                    .setColor(resources.getColor(R.color.gcncouponalert_light_blue))
-                                    .setSmallIcon(iconId)
-                                    .setLargeIcon(largeIcon)
-                                    .setContentTitle(title)
-                                    .setContentText(contentText);
-
-                    // Make something interesting happen when the user clicks on the notification.
-                    // In this case, opening the com.example.android.gcncouponalert.app is sufficient.
-                    Intent resultIntent = new Intent(context, MainActivity.class);
-
-                    // The stack builder object will contain an artificial back stack for the
-                    // started Activity.
-                    // This ensures that navigating backward from the Activity leads out of
-                    // your application to the Home screen.
-                    TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-                    stackBuilder.addNextIntent(resultIntent);
-                    PendingIntent resultPendingIntent =
-                            stackBuilder.getPendingIntent(
-                                    0,
-                                    PendingIntent.FLAG_UPDATE_CURRENT
-                            );
-                    mBuilder.setContentIntent(resultPendingIntent);
-
-                    NotificationManager mNotificationManager =
-                            (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                    // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
-                    mNotificationManager.notify(WEATHER_NOTIFICATION_ID, mBuilder.build());
-
-                    //refreshing last sync
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putLong(lastNotificationKey, System.currentTimeMillis());
-                    editor.commit();
-                }
-                cursor.close();
-            }
-        }
-    }
-    */
-
-    /**
+     /**
      * Helper method to handle insertion of a new location in the weather database.
      *
      * @param locationSetting The location string used to request updates from the server.

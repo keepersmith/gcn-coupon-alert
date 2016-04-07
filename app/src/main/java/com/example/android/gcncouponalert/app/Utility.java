@@ -21,6 +21,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.NetworkOnMainThreadException;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
@@ -28,12 +29,15 @@ import android.util.Log;
 import org.apache.http.util.ByteArrayBuffer;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.DateFormat;
@@ -41,11 +45,96 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Utility {
+    public static final String LOG_TAG = Utility.class.getSimpleName();
+
     public static String getPreferredLocation(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        return prefs.getString(context.getString(R.string.pref_location_key),
-                context.getString(R.string.pref_location_default));
+        return prefs.getString(context.getString(R.string.pref_location_key),context.getString(R.string.pref_location_default));
+        //return prefs.getString(context.getString(R.string.pref_location_key),getDefaultLocation(context));
     }
+
+    /*
+    private static String getDefaultLocation(Context context) {
+        String default_zip = null;
+        if (MainActivity.mLastLocation != null) {
+            try {
+                default_zip = getAndSetZip(MainActivity.mLastLocation.getLatitude(), MainActivity.mLastLocation.getLongitude());
+            } catch (NetworkOnMainThreadException e) {
+                Log.d(LOG_TAG, "We can only call getAndSetZip from the SyncAdapter - rats!");
+            }
+        }
+        if (default_zip == null) {
+            default_zip = context.getString(R.string.pref_location_default);
+        }
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(context.getString(R.string.pref_location_key), default_zip);
+        editor.commit();
+        return default_zip;
+    }
+
+    private static String getAndSetZip (double lat, double lon) throws NetworkOnMainThreadException {
+        HttpURLConnection urlConnection = null;
+        BufferedReader reader = null;
+
+        final String OPENMAP_BASE_URL = "http://nominatim.openstreetmap.org/reverse?";
+        Uri builtUri;
+        builtUri = Uri.parse(OPENMAP_BASE_URL).buildUpon()
+                .appendQueryParameter("format", "json")
+                .appendQueryParameter("lat", Double.toString(lat))
+                .appendQueryParameter("lon", Double.toString(lon))
+                .appendQueryParameter("addressetails", "1")
+                .build();
+        try {
+            URL url = new URL(builtUri.toString());
+            Log.d(LOG_TAG, "Calling API URL: " + builtUri.toString());
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
+            urlConnection.setConnectTimeout(1000);
+            urlConnection.connect();
+            Log.d(LOG_TAG, " Got back: " +urlConnection.getResponseCode()+" "+urlConnection.getResponseMessage());
+            // Read the input stream into a String
+            InputStream inputStream = urlConnection.getInputStream();
+            StringBuffer buffer = new StringBuffer();
+            if (inputStream == null) {
+                // Nothing to do.
+                return null;
+            }
+            reader = new BufferedReader(new InputStreamReader(inputStream));
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
+                // But it does make debugging a *lot* easier if you print out the completed
+                // buffer for debugging.
+                buffer.append(line + "\n");
+            }
+            if (buffer.length() == 0) {
+                // Stream was empty.  No point in parsing.
+                Log.d(LOG_TAG, "API returned nothing: " + builtUri.toString());
+                return "";
+            }
+            String mapJsonStr = buffer.toString();
+            Log.d(LOG_TAG, "API returned this: " + mapJsonStr);
+            //found_data = getCouponDataFromJson(couponJsonStr, locationQuery);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, e.getMessage(), e);
+            e.printStackTrace();
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (final IOException e) {
+                    Log.e(LOG_TAG, "Error closing stream", e);
+                }
+            }
+        }
+        return null;
+    }
+    */
 
     public static boolean isMetric(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -193,42 +282,7 @@ public class Utility {
         return String.format(context.getString(windFormat), windSpeed, direction);
     }
 
-    /**
-     * Helper method to provide the icon resource id according to the weather condition id returned
-     * by the OpenWeatherMap call.
-     * @param weatherId from OpenWeatherMap API response
-     * @return resource id for the corresponding icon. -1 if no relation is found.
-     */
-    /*
-    public static int getIconResourceForWeatherCondition(int weatherId) {
-        // Based on weather code data found at:
-        // http://bugs.openweathermap.org/projects/api/wiki/Weather_Condition_Codes
-        if (weatherId >= 200 && weatherId <= 232) {
-            return R.drawable.ic_storm;
-        } else if (weatherId >= 300 && weatherId <= 321) {
-            return R.drawable.ic_light_rain;
-        } else if (weatherId >= 500 && weatherId <= 504) {
-            return R.drawable.ic_rain;
-        } else if (weatherId == 511) {
-            return R.drawable.ic_snow;
-        } else if (weatherId >= 520 && weatherId <= 531) {
-            return R.drawable.ic_rain;
-        } else if (weatherId >= 600 && weatherId <= 622) {
-            return R.drawable.ic_snow;
-        } else if (weatherId >= 701 && weatherId <= 761) {
-            return R.drawable.ic_fog;
-        } else if (weatherId == 761 || weatherId == 781) {
-            return R.drawable.ic_storm;
-        } else if (weatherId == 800) {
-            return R.drawable.ic_clear;
-        } else if (weatherId == 801) {
-            return R.drawable.ic_light_clouds;
-        } else if (weatherId >= 802 && weatherId <= 804) {
-            return R.drawable.ic_cloudy;
-        }
-        return -1;
-    }
-    */
+
 
     public static int getIconResourceForCoupon(int coupon_code) {
         // Based on weather code data found at:
@@ -400,40 +454,5 @@ public class Utility {
         */
     }
 
-    /**
-     * Helper method to provide the art resource id according to the weather condition id returned
-     * by the OpenWeatherMap call.
-     * @param weatherId from OpenWeatherMap API response
-     * @return resource id for the corresponding icon. -1 if no relation is found.
-     */
-    /*
-    public static int getArtResourceForWeatherCondition(int weatherId) {
-        // Based on weather code data found at:
-        // http://bugs.openweathermap.org/projects/api/wiki/Weather_Condition_Codes
-        if (weatherId >= 200 && weatherId <= 232) {
-            return R.drawable.art_storm;
-        } else if (weatherId >= 300 && weatherId <= 321) {
-            return R.drawable.art_light_rain;
-        } else if (weatherId >= 500 && weatherId <= 504) {
-            return R.drawable.art_rain;
-        } else if (weatherId == 511) {
-            return R.drawable.art_snow;
-        } else if (weatherId >= 520 && weatherId <= 531) {
-            return R.drawable.art_rain;
-        } else if (weatherId >= 600 && weatherId <= 622) {
-            return R.drawable.art_snow;
-        } else if (weatherId >= 701 && weatherId <= 761) {
-            return R.drawable.art_fog;
-        } else if (weatherId == 761 || weatherId == 781) {
-            return R.drawable.art_storm;
-        } else if (weatherId == 800) {
-            return R.drawable.art_clear;
-        } else if (weatherId == 801) {
-            return R.drawable.art_light_clouds;
-        } else if (weatherId >= 802 && weatherId <= 804) {
-            return R.drawable.art_clouds;
-        }
-        return -1;
-    }
-    */
+
 }

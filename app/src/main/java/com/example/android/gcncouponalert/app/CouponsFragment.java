@@ -329,7 +329,8 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
             // If we don't need to restart the loader, and there's a desired position to restore
             // to, do so now.
             int offset = 0;
-            mListView.smoothScrollToPositionFromTop(mPosition,offset,100);
+            //mListView.smoothScrollToPositionFromTop(mPosition, offset, 100);
+            mListView.setSelection(mPosition);
         }
     }
 

@@ -17,6 +17,8 @@ package com.example.android.gcncouponalert.app;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -32,13 +34,16 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends ActionBarActivity implements
-        CouponsFragment.Callback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+        CouponsFragment.Callback {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
     private static final String DETAILFRAGMENT_TAG = "DFTAG";
@@ -46,7 +51,11 @@ public class MainActivity extends ActionBarActivity implements
     private boolean mTwoPane;
     private String mLocation;
     private GoogleApiClient mGoogleApiClient;
+    //private Location mLastLocation;
     private Location mLastLocation;
+    //public String mLatitude;
+    //public String mLongitude;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +63,7 @@ public class MainActivity extends ActionBarActivity implements
         mLocation = Utility.getPreferredLocation(this);
 
         // Create an instance of GoogleAPIClient.
+        /*
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -61,6 +71,7 @@ public class MainActivity extends ActionBarActivity implements
                     .addApi(LocationServices.API)
                     .build();
         }
+        */
 
         setContentView(R.layout.activity_main);
 
@@ -108,6 +119,7 @@ public class MainActivity extends ActionBarActivity implements
         //onNewIntent(getIntent());
     }
 
+    /*
     private void getAndSetZip (double lat, double lon) {
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
@@ -124,6 +136,7 @@ public class MainActivity extends ActionBarActivity implements
             URL url = new URL(builtUri.toString());
             Log.d(LOG_TAG, "Calling API URL: " + builtUri.toString());
             urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("GET");
             urlConnection.connect();
             Log.d(LOG_TAG, " Got back: " +urlConnection.getResponseCode()+" "+urlConnection.getResponseMessage());
             // Read the input stream into a String
@@ -151,21 +164,54 @@ public class MainActivity extends ActionBarActivity implements
             Log.d(LOG_TAG, "API returned this: " + mapJsonStr);
             //found_data = getCouponDataFromJson(couponJsonStr, locationQuery);
         } catch (Exception e) {
-
+            Log.e(LOG_TAG, e.getMessage(), e);
+            e.printStackTrace();
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (final IOException e) {
+                    Log.e(LOG_TAG, "Error closing stream", e);
+                }
+            }
         }
     }
+    */
+/*
+    private String getZipCodeFromLocation(Location location) {
+        Address addr = getAddressFromLocation(location);
+        return addr.getPostalCode() == null ? "" : addr.getPostalCode();
+    }
 
+    private Address getAddressFromLocation(Location location) {
+        Geocoder geocoder = new Geocoder(this);
+        Address address = new Address(Locale.getDefault());
+        try {
+            List<Address> addr = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+            if (addr.size() > 0) {
+                address = addr.get(0);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return address;
+    }
+*/
+    /*
     @Override
     public void onConnected(Bundle connectionHint) {
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (mLastLocation != null) {
-            Log.d(LOG_TAG,"Lat: "+mLastLocation.getLatitude()+"; Lon: "+mLastLocation.getLongitude());
-            getAndSetZip(mLastLocation.getLatitude(),mLastLocation.getLongitude());
-            //mLatitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
-            //mLongitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
+            String zip_code = getZipCodeFromLocation(mLastLocation);
+            Log.d(LOG_TAG, "Lat: " + mLastLocation.getLatitude() + "; Lon: " + mLastLocation.getLongitude()+"; Zip: "+zip_code);
+
         }
     }
-
+*/
+/*
     protected void onStart() {
         mGoogleApiClient.connect();
         super.onStart();
@@ -185,6 +231,7 @@ public class MainActivity extends ActionBarActivity implements
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
     }
+*/
 
     /*
     @Override
@@ -229,7 +276,8 @@ public class MainActivity extends ActionBarActivity implements
     @Override
     protected void onResume() {
         super.onResume();
-        /*
+        Log.d(LOG_TAG, "onResume()");
+
         String location = Utility.getPreferredLocation( this );
         // update the location in our second pane using the fragment manager
         if (location != null && !location.equals(mLocation)) {
@@ -237,19 +285,22 @@ public class MainActivity extends ActionBarActivity implements
             if ( null != ff ) {
                 ff.onLocationChanged();
             }
+            /*
             DetailFragment df = (DetailFragment)getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG);
             if ( null != df ) {
                 df.onLocationChanged(location);
             }
+            */
             mLocation = location;
         }
-        */
+
     }
 
     @Override
     public void onItemSelected(Uri contentUri) {
-        Log.d("onItemSelected()","Called with: "+contentUri.toString());
+        Log.d(LOG_TAG,"Called with: "+contentUri.toString());
 
+        /*
         if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
@@ -264,7 +315,7 @@ public class MainActivity extends ActionBarActivity implements
                     .replace(R.id.coupon_detail_container, fragment, DETAILFRAGMENT_TAG)
                     .commit();
         } else {
-
+        */
 
             /*
             Cursor cursor = getContentResolver().query(contentUri, new String[]{CouponsContract.CouponEntry.COLUMN_COUPON_REMOTE_ID}, null, null, null);
@@ -287,6 +338,6 @@ public class MainActivity extends ActionBarActivity implements
                     .setData(contentUri);
             startActivity(intent);
 
-        }
+        //}
     }
 }
