@@ -15,6 +15,7 @@
  */
 package com.example.android.gcncouponalert.app;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.location.Address;
@@ -66,6 +67,7 @@ public class MainActivity extends ActionBarActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //Context myct = this;
         mLocation = Utility.getPreferredLocation(this);
 
         // Create an instance of GoogleAPIClient.

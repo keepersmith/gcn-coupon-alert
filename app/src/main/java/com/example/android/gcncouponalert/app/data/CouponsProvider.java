@@ -39,7 +39,10 @@ public class CouponsProvider extends ContentProvider {
     static final int COUPON_WITH_LOCATION_NOT_NOTIFIED = 403;
     static final int COUPON_WITH_LOCATION_BRAND_NOT_NOTIFIED = 404;
     static final int COUPON_WITH_LOCATION_BRAND = 405;
+    static final int COUPON_WITH_LOCATION_CATEGORY_NOT_NOTIFIED = 406;
+    static final int COUPON_WITH_LOCATION_CATEGORY = 407;
     static final int BRAND = 500;
+    static final int CATEGORY = 600;
 
     private static final SQLiteQueryBuilder sCouponByLocationSettingQueryBuilder;
 
@@ -57,6 +60,12 @@ public class CouponsProvider extends ContentProvider {
                         " = " + CouponsContract.LocationEntry.TABLE_NAME +
                         "." + CouponsContract.LocationEntry._ID +
                         " INNER JOIN " +
+                        CouponsContract.CategoryEntry.TABLE_NAME +
+                        " ON " + CouponsContract.CouponEntry.TABLE_NAME +
+                        "." + CouponsContract.CouponEntry.COLUMN_CATEGORY_KEY +
+                        " = " + CouponsContract.CategoryEntry.TABLE_NAME +
+                        "." + CouponsContract.CategoryEntry._ID +
+                        " INNER JOIN " +
                         CouponsContract.BrandEntry.TABLE_NAME +
                         " ON " + CouponsContract.CouponEntry.TABLE_NAME +
                         "." + CouponsContract.CouponEntry.COLUMN_BRAND_KEY +
@@ -70,6 +79,12 @@ public class CouponsProvider extends ContentProvider {
                     "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
                     CouponsContract.BrandEntry.TABLE_NAME +
                     "." + CouponsContract.BrandEntry.COLUMN_NOTIFICATION_FLAG + " = 1 ";
+
+    private static final String sLocationSettingCategorySelection =
+            CouponsContract.LocationEntry.TABLE_NAME+
+                    "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
+                    CouponsContract.CategoryEntry.TABLE_NAME +
+                    "." + CouponsContract.CategoryEntry.COLUMN_NOTIFICATION_FLAG + " = 1 ";
 
     private static final String sLocationSettingSelection =
             CouponsContract.LocationEntry.TABLE_NAME+
@@ -86,6 +101,40 @@ public class CouponsProvider extends ContentProvider {
                     CouponsContract.BrandEntry.TABLE_NAME +
                     "." + CouponsContract.BrandEntry.COLUMN_NOTIFICATION_FLAG + " = 1 AND " +
                     CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry.COLUMN_NOTIFIED + " = 0 ";
+
+    private static final String sLocationSettingCategoryNotNotifiedSelection =
+            CouponsContract.LocationEntry.TABLE_NAME +
+                    "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
+                    CouponsContract.CategoryEntry.TABLE_NAME +
+                    "." + CouponsContract.CategoryEntry.COLUMN_NOTIFICATION_FLAG + " = 1 AND " +
+                    CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry.COLUMN_NOTIFIED + " = 0 ";
+
+    private Cursor getCouponByLocationSettingCategoryNotNotified(Uri uri, String[] projection, String sortOrder) {
+        String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
+        //String brand_code = CouponsContract.CouponEntry.getBrandFromUri(uri);
+
+        String selection = sLocationSettingCategoryNotNotifiedSelection;
+        String[] selectionArgs = new String[]{locationSetting};
+        /*
+        String queryString = sCouponByLocationSettingQueryBuilder.buildQuery(
+                projection,
+                selection,
+                null,
+                null,
+                sortOrder,
+                null
+        );
+        Log.d(LOG_TAG,"getCouponByLocationSettingNotNotified query:"+queryString);
+        */
+        return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
 
     private Cursor getCouponByLocationSettingBrandNotNotified(Uri uri, String[] projection, String sortOrder) {
         String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
@@ -193,6 +242,23 @@ public class CouponsProvider extends ContentProvider {
         );
     }
 
+    private Cursor getCouponByLocationSettingCategory(Uri uri, String[] projection, String sortOrder) {
+        String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
+        //String brand_code = CouponsContract.CouponEntry.getBrandFromUri(uri);
+
+        String selection = sLocationSettingCategorySelection;
+        String[] selectionArgs = new String[]{locationSetting};
+
+        return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                sortOrder
+        );
+    }
+
 
 
     /*
@@ -216,13 +282,16 @@ public class CouponsProvider extends ContentProvider {
 
         matcher.addURI(authority, CouponsContract.PATH_LOCATION, LOCATION);
         matcher.addURI(authority, CouponsContract.PATH_BRAND, BRAND);
+        matcher.addURI(authority, CouponsContract.PATH_CATEGORY, CATEGORY);
 
         matcher.addURI(authority, CouponsContract.PATH_COUPON, COUPON); // note to udacity: this does not really work like you think it does.
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#", COUPON_WITH_LOCATION);
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/b", COUPON_WITH_LOCATION_BRAND);
+        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/c", COUPON_WITH_LOCATION_CATEGORY);
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/id/#", COUPON_WITH_ID);
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/not-notified", COUPON_WITH_LOCATION_NOT_NOTIFIED);
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/b-not-notified", COUPON_WITH_LOCATION_BRAND_NOT_NOTIFIED);
+        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/c-not-notified", COUPON_WITH_LOCATION_CATEGORY_NOT_NOTIFIED);
         return matcher;
     }
 
@@ -253,17 +322,23 @@ public class CouponsProvider extends ContentProvider {
                 return CouponsContract.LocationEntry.CONTENT_TYPE;
             case BRAND:
                 return CouponsContract.BrandEntry.CONTENT_TYPE;
+            case CATEGORY:
+                return CouponsContract.CategoryEntry.CONTENT_TYPE;
             case COUPON:
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
             case COUPON_WITH_LOCATION:
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
             case COUPON_WITH_LOCATION_BRAND:
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
+            case COUPON_WITH_LOCATION_CATEGORY:
+                return CouponsContract.CouponEntry.CONTENT_TYPE;
             case COUPON_WITH_ID:
                 return CouponsContract.CouponEntry.CONTENT_ITEM_TYPE;
             case COUPON_WITH_LOCATION_NOT_NOTIFIED:
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
             case COUPON_WITH_LOCATION_BRAND_NOT_NOTIFIED:
+                return CouponsContract.CouponEntry.CONTENT_TYPE;
+            case COUPON_WITH_LOCATION_CATEGORY_NOT_NOTIFIED:
                 return CouponsContract.CouponEntry.CONTENT_TYPE;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
@@ -294,6 +369,19 @@ public class CouponsProvider extends ContentProvider {
             case BRAND: {
                 retCursor = mOpenHelper.getReadableDatabase().query(
                         CouponsContract.BrandEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+
+            case CATEGORY: {
+                retCursor = mOpenHelper.getReadableDatabase().query(
+                        CouponsContract.CategoryEntry.TABLE_NAME,
                         projection,
                         selection,
                         selectionArgs,
@@ -349,6 +437,13 @@ public class CouponsProvider extends ContentProvider {
 
             }
 
+            case COUPON_WITH_LOCATION_CATEGORY: {
+                //Log.d(LOG_TAG,"COUPON_WITH_LOCATION: "+selection);
+                retCursor = getCouponByLocationSettingCategory(uri, projection, sortOrder);
+                break;
+
+            }
+
             case COUPON_WITH_LOCATION_NOT_NOTIFIED: {
                 retCursor = getCouponByLocationSettingNotNotified(uri, projection, sortOrder);
                 break;
@@ -358,7 +453,11 @@ public class CouponsProvider extends ContentProvider {
             case COUPON_WITH_LOCATION_BRAND_NOT_NOTIFIED: {
                 retCursor = getCouponByLocationSettingBrandNotNotified(uri, projection, sortOrder);
                 break;
+            }
 
+            case COUPON_WITH_LOCATION_CATEGORY_NOT_NOTIFIED: {
+                retCursor = getCouponByLocationSettingCategoryNotNotified(uri, projection, sortOrder);
+                break;
             }
 
             /*
@@ -403,6 +502,14 @@ public class CouponsProvider extends ContentProvider {
                     throw new android.database.SQLException("Failed to insert row into " + uri);
                 break;
             }
+            case CATEGORY: {
+                long _id = db.insert(CouponsContract.CategoryEntry.TABLE_NAME, null, values);
+                if ( _id > 0 )
+                    returnUri = CouponsContract.CategoryEntry.buildCategoryUri(_id);
+                else
+                    throw new android.database.SQLException("Failed to insert row into " + uri);
+                break;
+            }
             case COUPON: {
                 long _id = db.insert(CouponsContract.CouponEntry.TABLE_NAME, null, values);
                 if ( _id > 0 )
@@ -433,6 +540,10 @@ public class CouponsProvider extends ContentProvider {
             case BRAND:
                 rowsDeleted = db.delete(
                         CouponsContract.BrandEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case CATEGORY:
+                rowsDeleted = db.delete(
+                        CouponsContract.CategoryEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             case COUPON:
                 rowsDeleted = db.delete(
@@ -474,6 +585,10 @@ public class CouponsProvider extends ContentProvider {
                 rowsUpdated = db.update(CouponsContract.BrandEntry.TABLE_NAME, values, selection,
                         selectionArgs);
                 break;
+            case CATEGORY:
+                rowsUpdated = db.update(CouponsContract.CategoryEntry.TABLE_NAME, values, selection,
+                        selectionArgs);
+                break;
             case COUPON:
                 rowsUpdated = db.update(CouponsContract.CouponEntry.TABLE_NAME, values, selection,
                         selectionArgs);
@@ -508,6 +623,34 @@ public class CouponsProvider extends ContentProvider {
                             update_stuff.put(CouponsContract.CouponEntry.COLUMN_LAST_ACTIVE_DATE, (String) value.get(CouponsContract.CouponEntry.COLUMN_COUPON_CODE));
                             update_stuff.put(CouponsContract.CouponEntry.COLUMN_LOC_KEY, (Long) value.get(CouponsContract.CouponEntry.COLUMN_LOC_KEY));
                             rowsUpdated += db.update(CouponsContract.CouponEntry.TABLE_NAME, update_stuff, CouponsContract.CouponEntry.COLUMN_COUPON_CODE+" = "+value.get(CouponsContract.CouponEntry.COLUMN_COUPON_CODE), null);
+                            //getContext().getContentResolver().update(CouponsContract.CouponEntry.CONTENT_URI, notified_flag, CouponsContract.CouponEntry.COLUMN_NOTIFIED + " = 0", null);
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+                if (returnCount > 0) {
+                    //getContext().getContentResolver().notifyChange(uri, null, false);
+                }
+                Log.d(LOG_TAG, "returnCount: " + returnCount + "; rowsUpdated: " + rowsUpdated);
+                return (returnCount+rowsUpdated);
+            }
+            case CATEGORY: {
+                db.beginTransaction();
+                int returnCount = 0;
+                int rowsUpdated = 0;
+                try {
+                    for (ContentValues value : values) {
+                        //normalizeDate(value);
+                        long _id = db.insert(CouponsContract.CategoryEntry.TABLE_NAME, null, value);
+                        if (_id != -1) {
+                            returnCount++;
+                        } else {
+                            // update the last_active_date and location
+                            ContentValues update_stuff = new ContentValues();
+                            update_stuff.put(CouponsContract.CategoryEntry.COLUMN_CATEGORY_COUNT, (String) value.get(CouponsContract.CategoryEntry.COLUMN_CATEGORY_COUNT));
+                            rowsUpdated += db.update(CouponsContract.CategoryEntry.TABLE_NAME, update_stuff, CouponsContract.CategoryEntry.COLUMN_CATEGORY_CODE+" = "+value.get(CouponsContract.CategoryEntry.COLUMN_CATEGORY_CODE), null);
                             //getContext().getContentResolver().update(CouponsContract.CouponEntry.CONTENT_URI, notified_flag, CouponsContract.CouponEntry.COLUMN_NOTIFIED + " = 0", null);
                         }
                     }

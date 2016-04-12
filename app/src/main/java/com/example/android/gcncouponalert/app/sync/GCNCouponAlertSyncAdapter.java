@@ -189,14 +189,16 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         //if (MainActivity.mLastLocation != null) {
             //getAndSetZip(MainActivity.mLastLocation.getLatitude(), MainActivity.mLastLocation.getLongitude());
         //}
+        // if zip_code is not set, get it from the user's phone
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
         String zip_code = prefs.getString(getContext().getString(R.string.pref_location_key),null);
         Log.d(LOG_TAG, "Zip: " + zip_code);
         if (zip_code == null) {
             cSyncLocation oSyncLocation = new cSyncLocation();
+            // first get lat/lon from google location services
             Location oLocation = oSyncLocation.GetLocationBlocking(getContext());
             if (oLocation != null) {
-                //zip_code = getZipCodeFromLocation(oLocation);
+                // now get zip from openstreetmap.org
                 zip_code = getAndSetZip(oLocation.getLatitude(),oLocation.getLongitude());
                 Log.d(LOG_TAG, "Lat: " + oLocation.getLatitude() + "; Lon: " + oLocation.getLongitude() + "; Zip: " + zip_code);
                 if (!zip_code.equals("")) {
@@ -214,65 +216,50 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             locationQuery = Utility.getPreferredLocation(getContext());
         }
 
-
         // These two need to be declared outside the try/catch
         // so that they can be closed in the finally block.
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
 
+        // setup GCN API authorization stuff
+        long dateInMillis = System.currentTimeMillis();
+        SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        shortenedDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String xAuthDate = shortenedDateFormat.format(dateInMillis);
+        String api_key = "b84ed8cb132cba185d6214af7fcd31f3c115b0e40046c512d4c2872c7edffe7cf7719193fdf8edffad62284c503a5f1beaca15916c84316e5e9c2b0a6c30f820";
+        String xAuthorization_token = "gcn-android:"+api_key+"@"+xAuthDate;
+
+        String xAuthorization_string = "";
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            byte[] bytes = md.digest(xAuthorization_token.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for(int i=0; i< bytes.length ;i++) {
+                sb.append(String.format("%02x", bytes[i]));
+            }
+            xAuthorization_string = "gcn-android:"+sb.toString();
+        } catch (Exception e) {
+            xAuthorization_string = "";
+            e.printStackTrace();
+        }
+
+
         // Will contain the raw JSON response as a string.
         String couponJsonStr = null;
 
-        String format = "json";
-        //String units = "metric";
-        //int numDays = 14;
+        //final String COUPON_BASE_URL = "http://tools.grocerycouponnetwork.com/api1/coupon/?";
+        final String COUPON_BASE_URL = "http://www.grocerycouponnetwork.com/api/coupons/get_active_coupons/?";
+        final String LOCATION_PARAM = "zip";
 
         boolean found_data = false;
 
         try {
-            // Construct the URL for the OpenWeatherMap query
-            // Possible parameters are avaiable at OWM's forecast API page, at
-            // http://openweathermap.org/API#forecast
-            //final String FORECAST_BASE_URL = "http://tools.grocerycouponnetwork.com/api1/coupon/?";
-            final String COUPON_BASE_URL = "http://www.grocerycouponnetwork.com/api/coupons/get_active_coupons/?";
-            //final String AUTH_KEY_PARAM = "auth_key";
-            final String LOCATION_PARAM = "zip";
-
-            long dateInMillis = System.currentTimeMillis();
-            SimpleDateFormat shortenedDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            shortenedDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-            String xAuthDate = shortenedDateFormat.format(dateInMillis);
-
-            // $api_key = 'b84ed8cb132cba185d6214af7fcd31f3c115b0e40046c512d4c2872c7edffe7cf7719193fdf8edffad62284c503a5f1beaca15916c84316e5e9c2b0a6c30f820';
-            String api_key = "b84ed8cb132cba185d6214af7fcd31f3c115b0e40046c512d4c2872c7edffe7cf7719193fdf8edffad62284c503a5f1beaca15916c84316e5e9c2b0a6c30f820";
-            // $authentication_token = hash('sha512',"gcn-android:$api_key@$authentication_date");
-            String xAuthorization_token = "gcn-android:"+api_key+"@"+xAuthDate;
-
-            String xAuthorization_string = "";
-            try {
-                MessageDigest md = MessageDigest.getInstance("SHA-512");
-                //md.update(salt.getBytes("UTF-8"));
-                byte[] bytes = md.digest(xAuthorization_token.getBytes("UTF-8"));
-                StringBuilder sb = new StringBuilder();
-                for(int i=0; i< bytes.length ;i++) {
-                    sb.append(String.format("%02x", bytes[i]));
-                }
-                xAuthorization_string = "gcn-android:"+sb.toString();
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-
-            // do this twice - once for national coupons, once for local coupons
             Uri[] builtUri = new Uri[1];
             builtUri[0] = Uri.parse(COUPON_BASE_URL).buildUpon()
                     .appendQueryParameter(LOCATION_PARAM, locationQuery)
-                    //.appendQueryParameter(AUTH_KEY_PARAM, BuildConfig.GCN_COUPON_API_KEY)
                     .build();
-            //builtUri[1] = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                    //.appendQueryParameter(AUTH_KEY_PARAM, BuildConfig.GCN_COUPON_API_KEY)
-                    //.build();
 
-            for (int i = 0; i < 1; i++) {
+            for (int i = 0; i < builtUri.length; i++) {
                 URL url = new URL(builtUri[i].toString());
                 Log.d(LOG_TAG, "Calling API URL: " + builtUri[i].toString()+"; "+xAuthDate+"; "+xAuthorization_string);
 
@@ -306,6 +293,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                     return;
                 }
                 couponJsonStr = buffer.toString();
+                //Utility.largeLog(LOG_TAG, "API returned this: " + couponJsonStr);
                 Log.d(LOG_TAG, "API returned this: " + couponJsonStr);
                 found_data = getCouponDataFromJson(couponJsonStr, locationQuery);
 
@@ -356,6 +344,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         //final String OWM_ERROR_MESSAGE = "error_message";
         //final String OWM_DATA = "data";
         final String OWM_COUPONS = "coupons";
+        final String OWM_CATEGORIES = "categories";
 
         //final String OWM_RESULTS = "results";
 
@@ -374,12 +363,42 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         final String OWM_COUPON_ADDITIONAL_TEXT = "additional_text";
         final String OWM_COUPON_SUMMARY_TEXT = "summary_text";
 
+        final String OWM_CATEGORY_CODE = "code";
+        final String OWM_CATEGORY_NAME = "name";
+        final String OWM_CATEGORY_COUNT = "count";
+
         boolean found_data = false;
 
         try {
             JSONObject couponJson = new JSONObject(forecastJsonStr);
+            JSONArray categoryArray = couponJson.getJSONArray(OWM_CATEGORIES);
+
+            Vector<ContentValues> cVVector_categories = new Vector<ContentValues>(categoryArray.length());
+
+            for(int i = 0; i < categoryArray.length(); i++) {
+                JSONObject categoryInfo = categoryArray.getJSONObject(i);
+                String category_code = categoryInfo.getString(OWM_CATEGORY_CODE);
+                String category_name = categoryInfo.getString(OWM_CATEGORY_NAME);
+                String category_count = categoryInfo.getString(OWM_CATEGORY_COUNT);
+
+                ContentValues categoryValues = new ContentValues();
+                categoryValues.put(CouponsContract.CategoryEntry.COLUMN_CATEGORY_CODE, category_code);
+                categoryValues.put(CouponsContract.CategoryEntry.COLUMN_CATEGORY_NAME, category_name);
+                categoryValues.put(CouponsContract.CategoryEntry.COLUMN_CATEGORY_COUNT, category_count);
+
+                cVVector_categories.add(categoryValues);
+            }
+            int inserted = 0;
+            // add to database
+            if ( cVVector_categories.size() > 0 ) {
+                ContentValues[] cvArray = new ContentValues[cVVector_categories.size()];
+                cVVector_categories.toArray(cvArray);
+                inserted = getContext().getContentResolver().bulkInsert(CouponsContract.CategoryEntry.CONTENT_URI, cvArray);
+            }
+
+            Log.d(LOG_TAG, "getCouponDataFromJson (categories): " + cVVector_categories.size() + " categories found; "+inserted+" new categories inserted.");
+
             JSONArray couponArray = couponJson.getJSONArray(OWM_COUPONS);
-            //JSONArray couponArray = couponData.getJSONArray(OWM_RESULTS);
 
             long locationId = addLocation(locationSetting);
 
@@ -404,6 +423,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 String summary_text = couponInfo.getString(OWM_COUPON_SUMMARY_TEXT);
 
                 long brandId = addBrand(brand_code, brand_name);
+                long categoryId = getCategoryId(category_code);
 
                 ContentValues couponValues = new ContentValues();
 
@@ -415,9 +435,10 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_IMAGE_EXT_80x100, image_ext_80x100);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_REMOTE_ID, remote_id);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_SLOT_INFO, slot_info);
-                couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_CATEGORY_CODE, category_code);
+                //couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_CATEGORY_CODE, category_code);
                 //couponValues.put(CouponsContract.CouponEntry.COLUMN_COUPON_BRAND_CODE, brand_code);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_BRAND_KEY, brandId);
+                couponValues.put(CouponsContract.CouponEntry.COLUMN_CATEGORY_KEY, categoryId);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_EXPIRATION_DATE, expiration_date);
                 //couponValues.put(CouponsContract.CouponEntry.COLUMN_BRAND_NAME, brand_name);
                 couponValues.put(CouponsContract.CouponEntry.COLUMN_ADDITIONAL_TEXT, additional_text);
@@ -438,7 +459,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             // now we work exclusively in UTC
             dayTime = new Time();
 
-            int inserted = 0;
+            inserted = 0;
             // add to database
             if ( cVVector.size() > 0 ) {
                 ContentValues[] cvArray = new ContentValues[cVVector.size()];
@@ -455,7 +476,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
 
             }
 
-            Log.d(LOG_TAG, "getCouponDataFromJson; " + cVVector.size() + " coupons found; "+inserted+" new coupons inserted.");
+            Log.d(LOG_TAG, "getCouponDataFromJson (coupons): " + cVVector.size() + " coupons found; "+inserted+" new coupons inserted.");
 
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
@@ -608,6 +629,27 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
         locationCursor.close();
         // Wait, that worked?  Yes!
         return locationId;
+    }
+
+    long getCategoryId (String category_code) {
+        long categoryId = 0;
+
+        // First, check if the location with this city name exists in the db
+        Cursor categoryCursor = getContext().getContentResolver().query(
+                CouponsContract.CategoryEntry.CONTENT_URI,
+                new String[]{CouponsContract.CategoryEntry._ID},
+                CouponsContract.CategoryEntry.COLUMN_CATEGORY_CODE + " = ?",
+                new String[]{category_code},
+                null);
+
+        if (categoryCursor.moveToFirst()) {
+            int categoryIdIndex = categoryCursor.getColumnIndex(CouponsContract.CategoryEntry._ID);
+            categoryId = categoryCursor.getLong(categoryIdIndex);
+        }
+
+        categoryCursor.close();
+        // Wait, that worked?  Yes!
+        return categoryId;
     }
 
     long addBrand (String brand_code, String brand_name) {

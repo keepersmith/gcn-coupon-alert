@@ -192,6 +192,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             // creating a Cursor for the data being displayed.
             return new CursorLoader(
                     getActivity(),
+                    //getContext(),
                     mUri,
                     DETAIL_COLUMNS,
                     null,
@@ -237,6 +238,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                     notification_flag.put(CouponsContract.BrandEntry.COLUMN_NOTIFICATION_FLAG, checked_value);
                     String[] brandId = new String[]{data.getString(COL_BRAND_KEY)};
                     getActivity().getContentResolver().update(CouponsContract.BrandEntry.CONTENT_URI, notification_flag, CouponsContract.BrandEntry._ID + " = ?", brandId);
+                    //getContext().getContentResolver().update(CouponsContract.BrandEntry.CONTENT_URI, notification_flag, CouponsContract.BrandEntry._ID + " = ?", brandId);
                 }
             });
 

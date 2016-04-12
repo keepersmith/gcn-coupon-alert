@@ -22,6 +22,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.example.android.gcncouponalert.app.data.CouponsContract.LocationEntry;
 import com.example.android.gcncouponalert.app.data.CouponsContract.CouponEntry;
 import com.example.android.gcncouponalert.app.data.CouponsContract.BrandEntry;
+import com.example.android.gcncouponalert.app.data.CouponsContract.CategoryEntry;
 
 /**
  * Manages a local database for weather data.
@@ -29,7 +30,7 @@ import com.example.android.gcncouponalert.app.data.CouponsContract.BrandEntry;
 public class CouponsDbHelper extends SQLiteOpenHelper {
 
     // If you change the database schema, you must increment the database version.
-    private static final int DATABASE_VERSION = 13;
+    private static final int DATABASE_VERSION = 14;
 
     static final String DATABASE_NAME = "gcn_coupon.db";
 
@@ -56,10 +57,21 @@ public class CouponsDbHelper extends SQLiteOpenHelper {
                 BrandEntry.COLUMN_NOTIFICATION_FLAG + " INTEGER DEFAULT 0 NOT NULL " +
                 " );";
 
+        final String SQL_CREATE_CATEGORY_TABLE = "CREATE TABLE " + CategoryEntry.TABLE_NAME + " (" +
+                CategoryEntry._ID + " INTEGER PRIMARY KEY," +
+                CategoryEntry.COLUMN_CATEGORY_CODE + " INTEGER UNIQUE ON CONFLICT IGNORE NOT NULL, " +
+                CategoryEntry.COLUMN_PARENT_CATEGORY_CODE + " INTEGER, " +
+                CategoryEntry.COLUMN_CATEGORY_COUNT + " INTEGER, " +
+                CategoryEntry.COLUMN_TOP_CATEGORY_CODE + " INTEGER, " +
+                CategoryEntry.COLUMN_CATEGORY_NAME + " TEXT NOT NULL, " +
+                CategoryEntry.COLUMN_NOTIFICATION_FLAG + " INTEGER DEFAULT 0 NOT NULL " +
+                " );";
+
         final String SQL_CREATE_COUPON_TABLE = "CREATE TABLE " + CouponEntry.TABLE_NAME + " (" +
                 CouponEntry._ID + " INTEGER PRIMARY KEY," +
                 CouponEntry.COLUMN_LOC_KEY + " INTEGER NOT NULL, " +
                 CouponEntry.COLUMN_BRAND_KEY + " INTEGER NOT NULL, " +
+                CouponEntry.COLUMN_CATEGORY_KEY + " INTEGER NOT NULL, " +
                 CouponEntry.COLUMN_COUPON_CODE + " INTEGER UNIQUE ON CONFLICT IGNORE NOT NULL, " +
                 CouponEntry.COLUMN_COUPON_NAME + " TEXT NOT NULL, " +
                 CouponEntry.COLUMN_LAST_ACTIVE_DATE + " DATETIME NOT NULL, " +
@@ -70,7 +82,7 @@ public class CouponsDbHelper extends SQLiteOpenHelper {
                 CouponEntry.COLUMN_COUPON_REMOTE_ID + " INTEGER DEFAULT 0, " +
                 CouponEntry.COLUMN_COUPON_SLOT_INFO + " INTEGER DEFAULT 0, " +
                 //CouponEntry.COLUMN_COUPON_BRAND_CODE + " INTEGER, " +
-                CouponEntry.COLUMN_COUPON_CATEGORY_CODE + " INTEGER, " +
+                //CouponEntry.COLUMN_COUPON_CATEGORY_CODE + " INTEGER, " +
                 CouponEntry.COLUMN_EXPIRATION_DATE + " DATETIME NOT NULL, " +
                 //CouponEntry.COLUMN_BRAND_NAME + " TEXT, " +
                 CouponEntry.COLUMN_ADDITIONAL_TEXT + " TEXT, " +
@@ -86,6 +98,7 @@ public class CouponsDbHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(SQL_CREATE_LOCATION_TABLE);
         sqLiteDatabase.execSQL(SQL_CREATE_COUPON_TABLE);
         sqLiteDatabase.execSQL(SQL_CREATE_BRAND_TABLE);
+        sqLiteDatabase.execSQL(SQL_CREATE_CATEGORY_TABLE);
     }
 
     @Override
@@ -99,6 +112,7 @@ public class CouponsDbHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + LocationEntry.TABLE_NAME);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + CouponEntry.TABLE_NAME);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + BrandEntry.TABLE_NAME);
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + CategoryEntry.TABLE_NAME);
         onCreate(sqLiteDatabase);
     }
 }

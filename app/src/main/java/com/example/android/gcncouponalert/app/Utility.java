@@ -26,10 +26,11 @@ import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 
-import org.apache.http.util.ByteArrayBuffer;
+//import org.apache.http.util.ByteArrayBuffer;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -46,6 +47,15 @@ import java.util.Date;
 
 public class Utility {
     public static final String LOG_TAG = Utility.class.getSimpleName();
+
+    public static void largeLog(String tag, String content) {
+        if (content.length() > 4000) {
+            Log.d(tag, "("+content.length()+") " + content.substring(0, 4000));
+            largeLog(tag, content.substring(4000));
+        } else {
+            Log.d(tag, "("+content.length()+") " + content);
+        }
+    }
 
     public static String getPreferredLocation(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -401,14 +411,26 @@ public class Utility {
                 InputStream is = con.getInputStream();
                 BufferedInputStream bis = new BufferedInputStream(is);
 
+                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                //We create an array of bytes
+                byte[] data = new byte[50];
+                int current = 0;
+
+                while((current = bis.read(data,0,data.length)) != -1){
+                    buffer.write(data,0,current);
+                }
+
+                /*
                 ByteArrayBuffer baf = new ByteArrayBuffer(50);
                 int current = 0;
                 while ((current = bis.read()) != -1) {
                     baf.append((byte) current);
                 }
+                */
 
                 FileOutputStream fos = new FileOutputStream(file);
-                fos.write(baf.toByteArray());
+                //fos.write(baf.toByteArray());
+                fos.write(buffer.toByteArray());
                 fos.close();
                 Log.d("Downloader", "Got image: " + full_imageURL);
                 //return BitmapFactory.decodeByteArray(baf.toByteArray(), 0, baf.toByteArray().length);

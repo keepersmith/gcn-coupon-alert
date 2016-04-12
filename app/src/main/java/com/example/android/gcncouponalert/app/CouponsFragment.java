@@ -158,6 +158,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
         // The CouponsAdapter will take data from a source and
         // use it to populate the ListView it's attached to.
         mCouponsAdapter = new CouponsAdapter(getActivity(), null, 0);
+        //mCouponsAdapter = new CouponsAdapter(getContext(), null, 0);
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
@@ -218,7 +219,8 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
     }
 
     private void updateCoupons() {
-        GCNCouponAlertSyncAdapter.syncImmediately(getActivity());
+        //GCNCouponAlertSyncAdapter.syncImmediately(getActivity());
+        GCNCouponAlertSyncAdapter.syncImmediately(getContext());
     }
 
     void onSpinnerChanged(int spinner_pos) {
@@ -291,7 +293,8 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                 sortOrder);
         */
 
-        String locationSetting = Utility.getPreferredLocation(getActivity());
+        //String locationSetting = Utility.getPreferredLocation(getActivity());
+        String locationSetting = Utility.getPreferredLocation(getContext());
         int spinner_pos = 0;
         if (bundle != null) {
             spinner_pos = bundle.getInt("spinner_pos");
@@ -306,7 +309,9 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
 
         Log.d(LOG_TAG, "locationSetting: "+locationSetting+"; spinner_pos: "+spinner_pos);
 
-        return new CursorLoader(getActivity(),
+        return new CursorLoader(
+                //getActivity(),
+                getContext(),
                 couponUri,
                 COUPONS_COLUMNS,
                 null,
@@ -320,7 +325,8 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         mCouponsAdapter.swapCursor(data);
 
-        Bundle extras = getActivity().getIntent().getExtras();
+        //Bundle extras = getActivity().getIntent().getExtras();
+        Bundle extras = this.getArguments();
         if(extras != null) {
             if(extras.containsKey("coupon_id")) {
                 long coupon_id = extras.getLong("coupon_id");
@@ -343,7 +349,8 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
                         }
                     }
                 }
-                getActivity().getIntent().removeExtra("coupon_id");
+                //getActivity().getIntent().removeExtra("coupon_id");
+                extras.remove("coupon_id");
             }
 
         }
