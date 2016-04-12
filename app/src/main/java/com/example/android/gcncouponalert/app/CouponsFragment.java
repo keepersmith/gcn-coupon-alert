@@ -117,6 +117,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
@@ -153,6 +154,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        Log.d(LOG_TAG, "onCreateView");
         // The CouponsAdapter will take data from a source and
         // use it to populate the ListView it's attached to.
         mCouponsAdapter = new CouponsAdapter(getActivity(), null, 0);
@@ -204,6 +206,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
+        Log.d(LOG_TAG, "onActivityCreated");
         getLoaderManager().initLoader(COUPONS_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
     }
@@ -216,6 +219,13 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
 
     private void updateCoupons() {
         GCNCouponAlertSyncAdapter.syncImmediately(getActivity());
+    }
+
+    void onSpinnerChanged(int spinner_pos) {
+        Log.d(LOG_TAG, "onSpinnerChanged pos: "+spinner_pos);
+        Bundle bundle = new Bundle();
+        bundle.putInt("spinner_pos", spinner_pos);
+        getLoaderManager().restartLoader(COUPONS_LOADER, bundle, this);
     }
 
     /*
@@ -258,6 +268,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+        Log.d(LOG_TAG, "onCreateLoader");
         // This is called when a new Loader needs to be created.  This
         // fragment only uses one loader, so we don't care about checking the id.
 
@@ -281,10 +292,22 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
         */
 
         String locationSetting = Utility.getPreferredLocation(getActivity());
-        Uri couponForLocationUri = CouponsContract.CouponEntry.buildCouponLocation(locationSetting);
+        int spinner_pos = 0;
+        if (bundle != null) {
+            spinner_pos = bundle.getInt("spinner_pos");
+        }
+        //String brand_code = "1";
+        Uri couponUri;
+        if (spinner_pos == 0) {
+            couponUri = CouponsContract.CouponEntry.buildCouponLocation(locationSetting);
+        } else {
+            couponUri = CouponsContract.CouponEntry.buildCouponLocationBrand(locationSetting);
+        }
+
+        Log.d(LOG_TAG, "locationSetting: "+locationSetting+"; spinner_pos: "+spinner_pos);
 
         return new CursorLoader(getActivity(),
-                couponForLocationUri,
+                couponUri,
                 COUPONS_COLUMNS,
                 null,
                 null,

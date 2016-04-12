@@ -1,6 +1,8 @@
 package com.example.android.gcncouponalert.app;
 
-import android.app.Activity;
+//import android.app.Activity;
+//import android.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -8,7 +10,7 @@ import android.widget.AdapterView;
 /**
  * Created by John on 4/7/2016.
  */
-public class SpinnerActivity extends Activity implements AdapterView.OnItemSelectedListener {
+public class SpinnerActivity extends ActionBarActivity implements AdapterView.OnItemSelectedListener {
 
     private final String LOG_TAG = SpinnerActivity.class.getSimpleName();
 
@@ -16,7 +18,12 @@ public class SpinnerActivity extends Activity implements AdapterView.OnItemSelec
                                int pos, long id) {
         // An item was selected. You can retrieve the selected item using
         // parent.getItemAtPosition(pos)
-        Log.d(LOG_TAG, " onItemSelected");
+        Log.d(LOG_TAG, " onItemSelected: " + pos + "; " + id);
+        CouponsFragment ff = (CouponsFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_forecast);
+        if ( null != ff ) {
+            ff.onSpinnerChanged(pos);
+        }
+        //onSpinnerChanged(pos);
     }
 
     public void onNothingSelected(AdapterView<?> parent) {

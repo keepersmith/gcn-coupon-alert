@@ -68,12 +68,12 @@ public class CouponsProvider extends ContentProvider {
     private static final String sLocationSettingBrandSelection =
             CouponsContract.LocationEntry.TABLE_NAME+
                     "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
-                    CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry.COLUMN_BRAND_KEY + " = ?";
+                    CouponsContract.BrandEntry.TABLE_NAME +
+                    "." + CouponsContract.BrandEntry.COLUMN_NOTIFICATION_FLAG + " = 1 ";
 
     private static final String sLocationSettingSelection =
             CouponsContract.LocationEntry.TABLE_NAME+
                     "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? ";
-
 
     private static final String sLocationSettingNotNotifiedSelection =
             CouponsContract.LocationEntry.TABLE_NAME +
@@ -83,15 +83,16 @@ public class CouponsProvider extends ContentProvider {
     private static final String sLocationSettingBrandNotNotifiedSelection =
             CouponsContract.LocationEntry.TABLE_NAME +
                     "." + CouponsContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
-                    CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry.COLUMN_BRAND_KEY + " = ? AND " +
+                    CouponsContract.BrandEntry.TABLE_NAME +
+                    "." + CouponsContract.BrandEntry.COLUMN_NOTIFICATION_FLAG + " = 1 AND " +
                     CouponsContract.CouponEntry.TABLE_NAME+"."+ CouponsContract.CouponEntry.COLUMN_NOTIFIED + " = 0 ";
 
     private Cursor getCouponByLocationSettingBrandNotNotified(Uri uri, String[] projection, String sortOrder) {
         String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
-        String brand_code = CouponsContract.CouponEntry.getBrandFromUri(uri);
+        //String brand_code = CouponsContract.CouponEntry.getBrandFromUri(uri);
 
         String selection = sLocationSettingBrandNotNotifiedSelection;
-        String[] selectionArgs = new String[]{locationSetting,brand_code};
+        String[] selectionArgs = new String[]{locationSetting};
         /*
         String queryString = sCouponByLocationSettingQueryBuilder.buildQuery(
                 projection,
@@ -177,10 +178,10 @@ public class CouponsProvider extends ContentProvider {
 
     private Cursor getCouponByLocationSettingBrand(Uri uri, String[] projection, String sortOrder) {
         String locationSetting = CouponsContract.CouponEntry.getLocationSettingFromUri(uri);
-        String brand_code = CouponsContract.CouponEntry.getBrandFromUri(uri);
+        //String brand_code = CouponsContract.CouponEntry.getBrandFromUri(uri);
 
         String selection = sLocationSettingBrandSelection;
-        String[] selectionArgs = new String[]{locationSetting,brand_code};
+        String[] selectionArgs = new String[]{locationSetting};
 
         return sCouponByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
                 projection,
@@ -218,10 +219,10 @@ public class CouponsProvider extends ContentProvider {
 
         matcher.addURI(authority, CouponsContract.PATH_COUPON, COUPON); // note to udacity: this does not really work like you think it does.
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#", COUPON_WITH_LOCATION);
-        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/#", COUPON_WITH_LOCATION_BRAND);
+        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/b", COUPON_WITH_LOCATION_BRAND);
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/id/#", COUPON_WITH_ID);
         matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/not-notified", COUPON_WITH_LOCATION_NOT_NOTIFIED);
-        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/#/not-notified", COUPON_WITH_LOCATION_BRAND_NOT_NOTIFIED);
+        matcher.addURI(authority, CouponsContract.PATH_COUPON + "/#/b-not-notified", COUPON_WITH_LOCATION_BRAND_NOT_NOTIFIED);
         return matcher;
     }
 

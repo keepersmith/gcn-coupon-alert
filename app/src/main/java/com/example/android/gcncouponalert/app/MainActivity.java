@@ -27,8 +27,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.location.Location;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.example.android.gcncouponalert.app.data.CouponsContract;
 import com.example.android.gcncouponalert.app.sync.GCNCouponAlertSyncAdapter;
@@ -264,7 +267,22 @@ public class MainActivity extends ActionBarActivity implements
                 R.array.coupon_filter_options, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
-        spinner.setOnItemSelectedListener(new SpinnerActivity());
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Log.d(LOG_TAG, " onItemSelected: " + position + "; " + id);
+                CouponsFragment ff = (CouponsFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_forecast);
+                if ( null != ff ) {
+                    ff.onSpinnerChanged(position);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+                // sometimes you need nothing here
+            }
+        });
         //MenuItem item = menu.findItem(R.id.coupons_spinner);
         //Spinner spinner =(Spinner) item.getActionView();
         //setupSpinner(spinner);

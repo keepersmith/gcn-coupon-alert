@@ -153,8 +153,16 @@ public class CouponsContract {
             return CONTENT_URI.buildUpon().appendPath(locationSetting).build();
         }
 
+        public static Uri buildCouponLocationBrand(String locationSetting) {
+            return CONTENT_URI.buildUpon().appendPath(locationSetting).appendPath("b").build();
+        }
+
         public static Uri buildCouponLocationNotNotified(String locationSetting) {
             return CONTENT_URI.buildUpon().appendPath(locationSetting).appendPath("not-notified").build();
+        }
+
+        public static Uri buildCouponLocationBrandNotNotified(String locationSetting) {
+            return CONTENT_URI.buildUpon().appendPath(locationSetting).appendPath("b-not-notified").build();
         }
 
         public static String getLocationSettingFromUri(Uri uri) {
