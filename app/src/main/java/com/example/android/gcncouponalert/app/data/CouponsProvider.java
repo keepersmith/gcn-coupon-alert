@@ -402,7 +402,7 @@ public class CouponsProvider extends ContentProvider {
                         null,
                         sortOrder
                 );
-                //Log.d(LOG_TAG,"COUPON: "+selection);
+                Log.d(LOG_TAG,"COUPON: "+selection);
                 break;
             }
 
@@ -424,7 +424,7 @@ public class CouponsProvider extends ContentProvider {
             }
 
             case COUPON_WITH_LOCATION: {
-                //Log.d(LOG_TAG,"COUPON_WITH_LOCATION: "+selection);
+                Log.d(LOG_TAG,"COUPON_WITH_LOCATION: "+uri.toString());
                 retCursor = getCouponByLocationSetting(uri, projection, sortOrder);
                 break;
 
@@ -471,7 +471,7 @@ public class CouponsProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
-        //Log.d(LOG_TAG,retCursor.toString());
+        //Log.d(LOG_TAG,"retCursor.getCount(): "+retCursor.getCount());
         retCursor.setNotificationUri(getContext().getContentResolver(), uri);
         return retCursor;
     }
@@ -631,7 +631,7 @@ public class CouponsProvider extends ContentProvider {
                     db.endTransaction();
                 }
                 if (returnCount > 0) {
-                    //getContext().getContentResolver().notifyChange(uri, null, false);
+                    getContext().getContentResolver().notifyChange(uri, null, false);
                 }
                 Log.d(LOG_TAG, "returnCount: " + returnCount + "; rowsUpdated: " + rowsUpdated);
                 return (returnCount+rowsUpdated);
@@ -659,7 +659,7 @@ public class CouponsProvider extends ContentProvider {
                     db.endTransaction();
                 }
                 if (returnCount > 0) {
-                    //getContext().getContentResolver().notifyChange(uri, null, false);
+                    getContext().getContentResolver().notifyChange(uri, null, false);
                 }
                 Log.d(LOG_TAG, "returnCount: " + returnCount + "; rowsUpdated: " + rowsUpdated);
                 return (returnCount+rowsUpdated);

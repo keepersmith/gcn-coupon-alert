@@ -307,11 +307,11 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
             couponUri = CouponsContract.CouponEntry.buildCouponLocationBrand(locationSetting);
         }
 
-        Log.d(LOG_TAG, "locationSetting: "+locationSetting+"; spinner_pos: "+spinner_pos);
+        Log.d(LOG_TAG, "locationSetting: "+locationSetting+"; spinner_pos: "+spinner_pos+"; couponUri:"+couponUri.toString());
 
         return new CursorLoader(
-                //getActivity(),
-                getContext(),
+                getActivity(),
+                //getContext(),
                 couponUri,
                 COUPONS_COLUMNS,
                 null,
@@ -323,6 +323,7 @@ public class CouponsFragment extends Fragment implements LoaderManager.LoaderCal
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        Log.d(LOG_TAG, "onLoadFinished: "+data.getCount());
         mCouponsAdapter.swapCursor(data);
 
         //Bundle extras = getActivity().getIntent().getExtras();

@@ -3,6 +3,7 @@ package com.example.android.gcncouponalert.app;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v4.widget.CursorAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import android.widget.TextView;
  * from a {@link Cursor} to a {@link android.widget.ListView}.
  */
 public class CouponsAdapter extends CursorAdapter {
+    public static final String LOG_TAG = CouponsAdapter.class.getSimpleName();
 
     private static final int VIEW_TYPE_COUNT = 2;
     private static final int VIEW_TYPE_TODAY = 0;
@@ -123,6 +125,7 @@ public class CouponsAdapter extends CursorAdapter {
         // Read low temperature from cursor
         //double low = cursor.getDouble(CouponsFragment.COL_WEATHER_MIN_TEMP);
         //viewHolder.lowTempView.setText(Utility.formatTemperature(context, low));
+        Log.d(LOG_TAG, "bindView: "+cursor.getString(CouponsFragment.COL_COUPON_NAME));
     }
 
     public void setUseTodayLayout(boolean useTodayLayout) {

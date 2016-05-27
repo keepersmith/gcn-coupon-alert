@@ -113,6 +113,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("GET");
             urlConnection.setConnectTimeout(1000);
+            urlConnection.setRequestProperty("User-Agent", "GCN Coupon Alert 0.1");
             urlConnection.connect();
             Log.d(LOG_TAG, " Got back: " +urlConnection.getResponseCode()+" "+urlConnection.getResponseMessage());
             // Read the input stream into a String
@@ -147,7 +148,7 @@ public class GCNCouponAlertSyncAdapter extends AbstractThreadedSyncAdapter {
             //found_data = getCouponDataFromJson(couponJsonStr, locationQuery);
         } catch (Exception e) {
             Log.e(LOG_TAG, e.getMessage(), e);
-            e.printStackTrace();
+            //e.printStackTrace();
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
